@@ -25,13 +25,20 @@ const chip = (active: boolean): React.CSSProperties => ({
   color: active ? 'var(--t-gold)' : 'var(--t-faint)',
 });
 
+/** Độ sáng hiện bằng thang đậm/nhạt trung tính — màu dành riêng cho ngũ hành */
+const RANK_OPACITY: Record<number, number> = { 1: 1, 2: 0.9, 3: 0.8, 4: 0.72, 5: 0.62, 6: 0.52, 7: 0.46 };
+const VN_RANK: Record<VnLevel, number> = { M: 1, V: 2, Đ: 3, B: 5, H: 7 };
+const pillStyle = (rank: number): React.CSSProperties => ({
+  border: '1px solid var(--t-border)', color: 'var(--t-text)', opacity: RANK_OPACITY[rank],
+  fontWeight: rank <= 2 ? 600 : 400, fontSize: '10px',
+});
+
 function LevelPill({ level, vnMode }: { level: StarBrightness; vnMode: boolean }) {
   const d = BRIGHTNESS_LEVELS[level];
   const vn = VN_LEVELS[d.vn];
-  const color = vnMode ? vn.color : d.color;
   return (
     <span title={d.descVi} className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5"
-      style={{ border: `1px solid ${color}55`, color, fontSize: '10px' }}>
+      style={pillStyle(vnMode ? VN_RANK[d.vn] : d.rank)}>
       <b>{vnMode ? d.vn : d.abbr}</b>
       <Bi vi={vnMode ? vn.vi : d.vi} zh={vnMode ? vn.zh : d.zh} />
     </span>
@@ -44,16 +51,16 @@ export default function BrightnessLegend({ school, onSchoolChange, mode, onModeC
   const order = schoolDef.levels === 5 ? FIVE_LEVEL_ZZ_ORDER : SEVEN_LEVEL_ORDER;
 
   return (
-    <div className="mt-3 rounded-xl px-3 py-2.5 text-[10px]" style={{ border: '1px solid var(--t-border)', color: 'var(--t-faint)' }}>
+    <div className="mt-3 rounded-xl px-3 py-2.5 text-[10px]" style={{ border: '1px solid var(--t-border)', background: 'var(--t-bg)', color: 'var(--t-faint)' }}>
       {/* Hàng 1: tiêu đề + bậc của bảng đang dùng */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="font-medium mr-1" style={{ color: 'var(--t-gold)' }}>
-          <Bi vi="Độ sáng" zh="亮度" />
+          <Bi vi="Độ sáng (đậm = sáng)" zh="亮度（越深越旺）" />
         </span>
         {mode === 'vn'
           ? (Object.keys(VN_LEVELS) as VnLevel[]).map(k => (
               <span key={k} className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5"
-                style={{ border: `1px solid ${VN_LEVELS[k].color}55`, color: VN_LEVELS[k].color }}>
+                style={pillStyle(VN_RANK[k])}>
                 <b>{k}</b><Bi vi={VN_LEVELS[k].vi} zh={VN_LEVELS[k].zh} />
               </span>
             ))
@@ -112,7 +119,7 @@ export default function BrightnessLegend({ school, onSchoolChange, mode, onModeC
                   const vn = VN_LEVELS[d.vn];
                   return (
                     <tr key={l} style={{ borderTop: '1px solid var(--t-border)' }}>
-                      <td className="py-1.5 pr-2 align-top whitespace-nowrap" style={{ color: d.color }}>
+                      <td className="py-1.5 pr-2 align-top whitespace-nowrap" style={{ color: 'var(--t-text)', opacity: RANK_OPACITY[d.rank], fontWeight: d.rank <= 2 ? 600 : 400 }}>
                         <b>{d.abbr}</b> <Bi vi={d.vi} zh={`${d.zh}（${d.zhFull}）`} />
                       </td>
                       <td className="py-1.5 pr-2 align-top" style={{ color: 'var(--t-text2)' }}>
@@ -120,7 +127,7 @@ export default function BrightnessLegend({ school, onSchoolChange, mode, onModeC
                       </td>
                       <td className="py-1.5 pr-2 align-top">{SEVEN_LEVEL_ORDER.includes(l) ? '✓' : '—'}</td>
                       <td className="py-1.5 pr-2 align-top">{FIVE_LEVEL_ZZ_ORDER.includes(l) ? '✓' : '—'}</td>
-                      <td className="py-1.5 align-top whitespace-nowrap" style={{ color: vn.color }}>
+                      <td className="py-1.5 align-top whitespace-nowrap" style={{ color: 'var(--t-text2)' }}>
                         {d.vn} · {vn.vi}{d.vnNote ? ' *' : ''}
                       </td>
                     </tr>

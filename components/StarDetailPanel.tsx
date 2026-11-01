@@ -6,6 +6,7 @@ import Bi, { HV, hv } from './Bi';
 import { vt } from '@/lib/ziwei/hanviet';
 import { STAR_DETAILS_VI, MINOR_STAR_NOTES } from './star-detail-vi';
 import { BRIGHTNESS_LEVELS, VN_LEVELS } from '@/lib/ziwei/brightness';
+import { SIHUA_WUXING, WUXING_META, starColor } from '@/lib/ziwei/wuxing';
 
 interface StarDetailPanelProps {
   star: Star | null;
@@ -167,18 +168,14 @@ const STAR_DETAIL: Record<string, {
 };
 
 const levelConfig = {
-  major: { vi: 'Chính tinh', label: '主星', color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' },
-  lucky: { vi: 'Cát tinh', label: '吉星', color: 'text-sky-400 border-sky-500/30 bg-sky-500/10' },
-  sha:   { vi: 'Sát tinh', label: '煞星', color: 'text-red-400 border-red-500/30 bg-red-500/10' },
-  minor: { vi: 'Tạp tinh', label: '杂星', color: 'text-slate-400 border-slate-500/25 bg-slate-500/10' },
+  major: { vi: 'Chính tinh', label: '主星' },
+  lucky: { vi: 'Cát tinh', label: '吉星' },
+  sha:   { vi: 'Sát tinh', label: '煞星' },
+  minor: { vi: 'Tạp tinh', label: '杂星' },
 };
 
-const siHuaColors: Record<string, string> = {
-  '禄': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-  '权': 'text-blue-400 bg-blue-500/10 border-blue-500/30',
-  '科': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
-  '忌': 'text-red-400 bg-red-500/10 border-red-500/30',
-};
+/** Thang đậm nhạt theo bậc độ sáng — đồng bộ với ô cung */
+const RANK_OPACITY: Record<number, number> = { 1: 1, 2: 0.9, 3: 0.8, 4: 0.72, 5: 0.62, 6: 0.52, 7: 0.46 };
 
 export default function StarDetailPanel({ star, palaceName, onClose }: StarDetailPanelProps) {
   const desc = star ? STAR_DESCRIPTIONS[star.name] : null;
@@ -196,33 +193,37 @@ export default function StarDetailPanel({ star, palaceName, onClose }: StarDetai
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.2 }}
-          className="card-glass rounded-xl overflow-hidden"
+          className="overflow-hidden flex-shrink-0" style={{ borderBottom: "1px solid var(--t-border)", maxHeight: "48%", display: "flex", flexDirection: "column" }}
         >
           {/* 标题栏 */}
           <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--t-border)' }}>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold" style={{ color: 'var(--t-gold)' }}><HV zh={star.name} /></span>
+              <span className="text-xl font-bold" style={{ color: starColor(star.name) }}><HV zh={star.name} /></span>
               {typeConfig && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${typeConfig.color}`}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ border: '1px solid var(--t-border)', color: 'var(--t-text2)' }}>
                   <Bi vi={typeConfig.vi} zh={typeConfig.label} />
                 </span>
               )}
-              {star.siHua && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${siHuaColors[star.siHua] || ''}`}>
-                  <HV zh={`化${star.siHua}`} />
-                </span>
-              )}
+              {star.siHua && (() => {
+                const c = WUXING_META[SIHUA_WUXING[star.siHua]].cssVar;
+                const solid = star.siHua === '忌';
+                return (
+                  <span className="pc-sihua" style={{ color: solid ? 'var(--t-bg)' : c, background: solid ? c : `color-mix(in srgb, ${c} 13%, transparent)`, borderColor: c, borderStyle: 'solid', fontSize: '10px', padding: '3px 6px' }}>
+                    {hv(`化${star.siHua}`)}<span lang="zh-CN" className="pc-sihua-zh">化{star.siHua}</span>
+                  </span>
+                );
+              })()}
             </div>
-            <button onClick={onClose} className="transition-colors text-lg leading-none" style={{ color: 'var(--t-faint)' }}>×</button>
+            <button onClick={onClose} aria-label="Đóng 关闭" className="transition-colors text-lg leading-none w-7 h-7 rounded-md" style={{ color: 'var(--t-faint)' }}>×</button>
           </div>
 
-          <div className="p-4 space-y-4 overflow-y-auto max-h-[560px]">
+          <div className="p-4 space-y-4 overflow-y-auto min-h-0">
             {/* 亮度 · Độ sáng */}
             {lvl && lvlVn && (
-              <div className="rounded-lg px-3 py-2.5" style={{ border: `1px solid ${lvl.color}55`, background: `${lvl.color}10` }}>
+              <div className="rounded-lg px-3 py-2.5" style={{ border: '1px solid var(--t-border)', background: 'var(--t-surface)' }}>
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
                   <span className="text-[10px]" style={{ color: 'var(--t-faint)' }}><Bi vi="Độ sáng tại cung này" zh="本宫亮度" /></span>
-                  <span className="text-sm font-bold" style={{ color: lvl.color }}>
+                  <span className="text-sm" style={{ color: 'var(--t-text)', opacity: RANK_OPACITY[lvl.rank], fontWeight: lvl.rank <= 2 ? 700 : 500 }}>
                     <Bi vi={`${lvl.vi} (${lvl.abbr})`} zh={`${lvl.zh} · ${lvl.zhFull}`} />
                   </span>
                   <span className="text-[10px]" style={{ color: 'var(--t-faint)' }}>
@@ -239,7 +240,7 @@ export default function StarDetailPanel({ star, palaceName, onClose }: StarDetai
             {desc && (
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { key: 'el', vi: `Ngũ hành · ${hv(desc.element)}`, zh: `五行 · ${desc.element}`, color: 'var(--t-text2)' },
+                  { key: 'el', vi: `Ngũ hành · ${hv(desc.element)}`, zh: `五行 · ${desc.element}`, color: starColor(star.name) },
                   { key: 'na', vi: `Tính chất · ${vt(desc.nature)}`, zh: `性质 · ${desc.nature}`, color: 'var(--t-text2)' },
                   ...(palaceName ? [{ key: 'po', vi: `Vị trí · ${hv(palaceName)}`, zh: `位置 · ${palaceName}`, color: 'var(--t-text2)' }] : []),
                 ].map(tag => (
@@ -258,7 +259,7 @@ export default function StarDetailPanel({ star, palaceName, onClose }: StarDetai
                 <div className="flex flex-wrap gap-1.5">
                   {desc.keywords.split('·').map(k => (
                     <span key={k} className="text-[11px] px-2 py-0.5 rounded-full"
-                      style={{ color: 'var(--t-gold)', border: '1px solid rgba(212,168,67,0.2)', background: 'rgba(212,168,67,0.06)' }}>
+                      style={{ color: 'var(--t-text2)', border: '1px solid var(--t-border)', background: 'var(--t-surface)' }}>
                       <Bi vi={vt(k.trim())} zh={k.trim()} />
                     </span>
                   ))}
@@ -268,11 +269,11 @@ export default function StarDetailPanel({ star, palaceName, onClose }: StarDetai
 
             {/* 古书原文 */}
             {detail && (
-              <div className="rounded-xl p-3" style={{ background: 'rgba(212,168,67,0.04)', border: '1px solid rgba(212,168,67,0.12)' }}>
-                <div className="text-[10px] tracking-widest mb-1.5 flex items-center gap-1" style={{ color: 'var(--t-gold)', opacity: 0.7 }}>
+              <div className="rounded-xl p-3" style={{ background: 'var(--t-surface)', border: '1px solid var(--t-border)' }}>
+                <div className="text-[10px] mb-1.5 flex items-center gap-1" style={{ color: 'var(--t-faint)' }}>
                   <Bi vi="Nguyên văn cổ thư" zh="古书原文" />
                 </div>
-                <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--t-gold)', opacity: 0.8 }}><Bi block vi={detailVi?.classical ?? ''} zh={detail.classical} zhClassName="mt-1.5" /></p>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--t-text2)', fontFamily: '"Songti SC", "Noto Serif", serif' }}><Bi block vi={detailVi?.classical ?? ''} zh={detail.classical} zhClassName="mt-1.5" /></p>
               </div>
             )}
 

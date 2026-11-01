@@ -33,10 +33,11 @@ export function buildSiHuaOverlay(stemIndex: number): Record<string, string> {
 }
 
 const SIHUA_COLORS: Record<string, string> = {
-  '禄': '#4ade80',
-  '权': '#60a5fa',
-  '科': '#facc15',
-  '忌': '#f87171',
+  // Theo ngũ hành Tứ Hóa: Lộc Thổ, Quyền Mộc, Khoa Thủy, Kỵ Thủy
+  '禄': 'var(--wx-tho)',
+  '权': 'var(--wx-moc)',
+  '科': 'var(--wx-thuy)',
+  '忌': 'var(--wx-thuy)',
 };
 
 export default function TimeNav({
@@ -80,7 +81,7 @@ export default function TimeNav({
       {/* Tab 行 */}
       <div
         className="flex items-center rounded-xl p-1 gap-1"
-        style={{ background: 'var(--t-surface)', border: '1px solid var(--t-border)' }}
+        style={{ background: 'var(--t-bg)', border: '1px solid var(--t-border)' }}
       >
         {/* 本命 */}
         <TabButton

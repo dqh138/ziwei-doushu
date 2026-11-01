@@ -1,12 +1,21 @@
 'use client';
-import { motion } from 'framer-motion';
-import type { Palace, Star } from '@/lib/ziwei/types';
+/**
+ * Ô cung trên lá số · 命盘宫格
+ *
+ * Quy luật hiển thị:
+ *  · Màu tên sao = ngũ hành của sao (lib/ziwei/wuxing.ts); sao chưa có hành thống nhất → trung tính.
+ *  · Tứ Hóa = ngũ hành Tứ Hóa (Lộc Thổ, Quyền Mộc, Khoa Thủy, Kỵ Thủy); Kỵ tô đặc để tách khỏi Khoa.
+ *  · Độ sáng = thang đậm/nhạt trung tính (không thêm màu).
+ *  · Vàng kim chỉ cho trạng thái: cung đang chọn, Tam phương Tứ chính, đại hạn hiện tại.
+ */
+import type { Palace, Star, StarBrightness } from '@/lib/ziwei/types';
 import { STEMS, BRANCHES } from '@/lib/ziwei/constants';
-import clsx from 'clsx';
-import Bi, { HV, hv } from './Bi';
+import { hv } from './Bi';
 import { STEMS_VI, BRANCHES_VI, SIHUA_VI } from '@/lib/ziwei/hanviet';
-import type { StarBrightness } from '@/lib/ziwei/types';
 import { BRIGHTNESS_LEVELS, brightnessTag, type BrightnessDisplay } from '@/lib/ziwei/brightness';
+import { CORE_LUCKY, CORE_SHA, SIHUA_WUXING, WUXING_META, starColor } from '@/lib/ziwei/wuxing';
+
+export type ChartDensity = 'compact' | 'full';
 
 interface PalaceCellProps {
   palace: Palace;
@@ -19,214 +28,150 @@ interface PalaceCellProps {
   overlayStarSiHua?: Record<string, string>;
   /** 叠加标签：'年'（流年）或 '限'（大限） */
   overlayLabel?: string;
-  /** 点击叠加四化 badge 回调 */
   onSiHuaClick?: (starName: string, siHua: string) => void;
-  /** Kiểu hiện độ sáng: 'detail' = các bậc TQ/ĐL, 'vn' = 5 bậc Việt Nam, 'off' = ẩn */
   brightnessMode?: BrightnessDisplay | 'off';
+  density?: ChartDensity;
 }
 
-/** Nhãn độ sáng cạnh tên sao. full = hiện cả tên Việt (chính tinh); compact = viết tắt + chữ Hán (phụ tinh). */
+/** Thang đậm nhạt theo bậc độ sáng (1 = Miếu … 7 = Hãm) */
+const RANK_OPACITY: Record<number, number> = { 1: 1, 2: 0.9, 3: 0.8, 4: 0.72, 5: 0.62, 6: 0.52, 7: 0.46 };
+
 function BrightTag({ level, mode, full }: { level?: StarBrightness; mode: BrightnessDisplay | 'off'; full?: boolean }) {
   if (mode === 'off') return null;
   const t = brightnessTag(level, mode);
-  if (!t) return null;
-  const def = level ? BRIGHTNESS_LEVELS[level] : undefined;
-  const title = def ? `${def.vi} ${def.zh} (${def.zhFull}) — ${def.descVi}${mode === 'vn' && def.vnNote ? ` ${def.vnNote}` : ''}` : '';
+  if (!t || !level) return null;
+  const def = BRIGHTNESS_LEVELS[level];
   return (
     <span
-      title={title}
-      className={clsx('inline-flex items-center leading-none flex-shrink-0 rounded-sm', full ? 'text-[8px] px-[3px] py-px ml-1 border' : 'text-[7.5px] ml-px')}
-      style={{ color: t.color, borderColor: full ? `${t.color}66` : undefined, background: full ? `${t.color}14` : undefined }}
+      title={`${def.vi} ${def.zh} (${def.zhFull}) — ${def.descVi}${mode === 'vn' && def.vnNote ? ` ${def.vnNote}` : ''}`}
+      className="pc-bright"
+      style={{
+        opacity: RANK_OPACITY[t.rank] ?? 0.6,
+        fontWeight: t.rank <= 2 ? 600 : 400,
+        textDecoration: t.rank === 7 ? 'underline dotted' : undefined,
+      }}
     >
-      {full ? t.vi : t.abbr}
-      <span className="bi-zh ml-px" lang="zh-CN">{t.zh}</span>
+      {full ? t.vi : t.abbr}<span lang="zh-CN" className="pc-bright-zh">{t.zh}</span>
     </span>
   );
 }
 
-const SIHUA_STYLES: Record<string, string> = {
-  '禄': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-  '权': 'text-blue-400 bg-blue-500/10 border-blue-500/30',
-  '科': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
-  '忌': 'text-red-400 bg-red-500/10 border-red-500/30',
-};
-
-const SiHuaBadge = ({
-  siHua,
-  overlay,
-  label,
-  onClick,
-}: {
-  siHua: string;
-  overlay?: boolean;
-  label?: string;
-  onClick?: (e: React.MouseEvent) => void;
-}) => {
+function SiHuaBadge({ siHua, overlayLabel, onClick }: { siHua: string; overlayLabel?: string; onClick?: (e: React.MouseEvent) => void }) {
+  const wx = SIHUA_WUXING[siHua];
+  const c = wx ? WUXING_META[wx].cssVar : 'var(--wx-none)';
+  const solid = siHua === '忌';
+  const overlay = !!overlayLabel;
   return (
     <span
-      className={clsx(
-        'inline-flex items-center text-[8px] px-1 rounded-full border leading-none py-px font-bold ml-1 flex-shrink-0',
-        SIHUA_STYLES[siHua],
-        overlay && 'border-dashed opacity-80',
-        onClick && 'cursor-pointer hover:opacity-100',
-      )}
       onClick={onClick}
-    >
-      {overlay && label && <span className="mr-px opacity-70">{hv(label)}</span>}
-      {SIHUA_VI[siHua] ?? siHua}
-      <span className="bi-zh ml-px" lang="zh-CN">{overlay && label ? label : ''}{siHua}</span>
-    </span>
-  );
-};
-
-export default function PalaceCell({
-  palace, onClick, onStarClick, isSelected, isSanFang, delay = 0,
-  overlayStarSiHua, overlayLabel, onSiHuaClick, brightnessMode = 'detail',
-}: PalaceCellProps) {
-  const { branch, stem, name, stars, daXianAge, isCurrentDaXian, isMingGong, isShenGong } = palace;
-  const ganzhi = `${STEMS[stem]}${BRANCHES[branch]}`;
-  const ganzhiVi = `${STEMS_VI[stem]} ${BRANCHES_VI[branch]}`;
-
-  const majorStars = stars.filter(s => s.type === 'major');
-  const luckyStars = stars.filter(s => s.type === 'lucky');
-  const shaStars = stars.filter(s => s.type === 'sha');
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.35, delay, ease: 'easeOut' }}
-      onClick={onClick}
-      className="relative flex flex-col p-1.5 cursor-pointer transition-all duration-200 h-full"
+      role={onClick ? 'button' : undefined}
+      title={`${overlay ? `${hv(overlayLabel!)} ` : ''}Hóa ${SIHUA_VI[siHua]} 化${siHua}${wx ? ` · hành ${WUXING_META[wx].vi}` : ''}`}
+      className="pc-sihua"
       style={{
-        minHeight: '90px',
-        background: isCurrentDaXian
-          ? 'rgba(147,51,234,0.08)'
-          : isSelected
-          ? 'rgba(37,99,235,0.18)'
-          : isSanFang
-          ? 'rgba(37,99,235,0.09)'
-          : isMingGong
-          ? 'rgba(212,168,67,0.04)'
-          : 'var(--t-bg)',
-        boxShadow: isCurrentDaXian
-          ? 'inset 3px 0 0 rgba(147,51,234,0.5)'
-          : isSelected
-          ? 'inset 0 0 0 1.5px rgba(37,99,235,0.7)'
-          : isSanFang
-          ? 'inset 0 0 0 1px rgba(37,99,235,0.4)'
-          : 'none',
+        color: solid ? 'var(--t-bg)' : c,
+        background: solid ? c : `color-mix(in srgb, ${c} 13%, transparent)`,
+        borderColor: c,
+        borderStyle: overlay ? 'dashed' : 'solid',
+        cursor: onClick ? 'pointer' : undefined,
       }}
     >
-      {/* 大限年龄 */}
-      {daXianAge && (
-        <div className={clsx(
-          'absolute top-1 right-1 text-[9px] font-mono tabular-nums',
-          isCurrentDaXian ? 'text-purple-400' : ''
-        )}
-          style={!isCurrentDaXian ? { color: 'var(--t-faint)', opacity: 0.75 } : undefined}
-        >
-          {daXianAge[0]}–{daXianAge[1]}
-        </div>
-      )}
+      {overlay && <span className="pc-sihua-pre">{hv(overlayLabel!)}</span>}
+      {SIHUA_VI[siHua] ?? siHua}<span lang="zh-CN" className="pc-sihua-zh">{siHua}</span>
+    </span>
+  );
+}
 
-      {/* 宫名行 */}
-      <div className="flex items-center gap-1 mb-0.5 pr-8">
-        <span className={clsx('text-[10px] font-medium tracking-wide',
-          isMingGong ? 'text-amber-500' : isShenGong ? 'text-sky-500' : ''
-        )}
-          style={!isMingGong && !isShenGong ? { color: 'var(--t-faint)' } : undefined}
-        >
-          <HV zh={name} />
+function StarName({ star, size }: { star: Star; size: 'major' | 'minor' | 'misc' }) {
+  const c = starColor(star.name);
+  return (
+    <span className={`pc-star pc-star-${size}`} style={{ color: c }}>
+      {hv(star.name)}<span lang="zh-CN" className="pc-star-zh">{star.name}</span>
+    </span>
+  );
+}
+
+export default function PalaceCell({
+  palace, onClick, onStarClick, isSelected, isSanFang,
+  overlayStarSiHua, overlayLabel, onSiHuaClick, brightnessMode = 'detail', density = 'compact',
+}: PalaceCellProps) {
+  const { branch, stem, name, stars, daXianAge, isCurrentDaXian, isMingGong, isShenGong } = palace;
+  const full = density === 'full';
+
+  const majors = stars.filter(s => s.type === 'major');
+  const lucky = stars.filter(s => s.type === 'lucky' && (full || CORE_LUCKY.has(s.name)));
+  const sha = stars.filter(s => s.type === 'sha' && (full || CORE_SHA.has(s.name)));
+  const misc = full ? stars.filter(s => s.type === 'minor') : [];
+
+  const badges = (s: Star) => {
+    const ov = overlayStarSiHua?.[s.name];
+    return (
+      <>
+        {s.siHua && <SiHuaBadge siHua={s.siHua} />}
+        {ov && <SiHuaBadge siHua={ov} overlayLabel={overlayLabel} onClick={e => { e.stopPropagation(); onSiHuaClick?.(s.name, ov); }} />}
+      </>
+    );
+  };
+
+  const starBtn = (s: Star, size: 'minor' | 'misc') => (
+    <span key={s.name} className="pc-item" onClick={e => { e.stopPropagation(); onStarClick?.(s); }}>
+      <StarName star={s} size={size} />
+      <BrightTag level={s.brightnessRaw} mode={brightnessMode} />
+      {badges(s)}
+    </span>
+  );
+
+  const nameVi = hv(name);
+  return (
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+      aria-pressed={!!isSelected}
+      aria-label={`Cung ${nameVi}`}
+      className="pc"
+      data-state={isSelected ? 'selected' : isSanFang ? 'sanfang' : undefined}
+    >
+      {/* Đầu ô: tên cung + đại hạn */}
+      <div className="pc-head">
+        <span className="pc-name" data-ming={isMingGong || undefined}>
+          {nameVi}<span lang="zh-CN" className="pc-name-zh">{name}</span>
         </span>
-        {isMingGong && (
-          <span className="text-[7px] text-amber-500/80 border border-amber-500/30 px-0.5 rounded leading-tight">Mệnh 命</span>
-        )}
-        {isShenGong && (
-          <span className="text-[7px] text-sky-500/80 border border-sky-500/30 px-0.5 rounded leading-tight">Thân 身</span>
+        {isShenGong && <span className="pc-chip" title="Cung Thân 身宫">Thân<span lang="zh-CN">身</span></span>}
+        {daXianAge && (
+          <span className="pc-age pc-age-head" data-current={isCurrentDaXian || undefined} title={isCurrentDaXian ? 'Đại hạn hiện tại 当前大限' : 'Đại hạn 大限'}>
+            {daXianAge[0]}–{daXianAge[1]}
+          </span>
         )}
       </div>
 
-      {/* 干支 */}
-      <div className="text-[9px] font-mono mb-1" style={{ color: 'var(--t-faint)', opacity: 0.75 }}>{ganzhiVi} <span className="bi-zh" lang="zh-CN">{ganzhi}</span></div>
-
-      {/* 主星 */}
-      <div className="flex flex-col gap-0.5 flex-1">
-        {majorStars.length === 0 && (
-          <span className="text-[10px] italic" style={{ color: 'var(--t-faint)', opacity: 0.6 }}><Bi vi="Vô chính diệu" zh="空宫" /></span>
+      {/* Chính tinh */}
+      <div className="pc-majors">
+        {majors.length === 0 && (
+          <span className="pc-empty">
+            Vô chính diệu<span lang="zh-CN">空宫</span>
+            {palace.borrowedStars?.length ? <span className="pc-borrow"> · mượn {palace.borrowedStars.map(hv).join(', ')}</span> : null}
+          </span>
         )}
-        {majorStars.map((star) => {
-          const overlaySiHua = overlayStarSiHua?.[star.name];
-          return (
-            <div
-              key={star.name}
-              className="flex items-center"
-              onClick={e => { e.stopPropagation(); onStarClick?.(star); }}
-            >
-              <span className={clsx(
-                'text-[13px] leading-tight font-bold tracking-tight cursor-pointer hover:brightness-125 transition-all',
-                star.brightness === 'bright' ? 'text-amber-300' : star.brightness === 'dim' ? 'text-amber-700/80' : 'text-amber-500',
-              )}>
-                <HV zh={star.name} />
-              </span>
-              <BrightTag level={star.brightnessRaw} mode={brightnessMode} full />
-              {star.siHua && <SiHuaBadge siHua={star.siHua} />}
-              {overlaySiHua && (
-                <SiHuaBadge
-                  siHua={overlaySiHua}
-                  overlay
-                  label={overlayLabel}
-                  onClick={e => {
-                    e.stopPropagation();
-                    onSiHuaClick?.(star.name, overlaySiHua);
-                  }}
-                />
-              )}
-            </div>
-          );
-        })}
+        {majors.map(s => (
+          <div key={s.name} className="pc-major" onClick={e => { e.stopPropagation(); onStarClick?.(s); }}>
+            <StarName star={s} size="major" />
+            <BrightTag level={s.brightnessRaw} mode={brightnessMode} full />
+            {badges(s)}
+          </div>
+        ))}
       </div>
 
-      {/* 吉星 */}
-      {luckyStars.length > 0 && (
-        <div className="flex flex-wrap gap-x-1 mt-0.5">
-          {luckyStars.map(s => {
-            const overlaySiHua = overlayStarSiHua?.[s.name];
-            return (
-              <span key={s.name} className="inline-flex items-center text-[9px] text-sky-500/70 leading-tight cursor-pointer"
-                onClick={e => { e.stopPropagation(); onStarClick?.(s); }}>
-                <HV zh={s.name} />
-                <BrightTag level={s.brightnessRaw} mode={brightnessMode} />
-                {s.siHua && <SiHuaBadge siHua={s.siHua} />}
-                {overlaySiHua && (
-                  <SiHuaBadge
-                    siHua={overlaySiHua}
-                    overlay
-                    label={overlayLabel}
-                    onClick={e => {
-                      e.stopPropagation();
-                      onSiHuaClick?.(s.name, overlaySiHua);
-                    }}
-                  />
-                )}
-              </span>
-            );
-          })}
-        </div>
-      )}
+      {/* Cát tinh / sát tinh / tạp diệu */}
+      {lucky.length > 0 && <div className="pc-row">{lucky.map(s => starBtn(s, 'minor'))}</div>}
+      {sha.length > 0 && <div className="pc-row">{sha.map(s => starBtn(s, 'minor'))}</div>}
+      {misc.length > 0 && <div className="pc-row pc-row-misc">{misc.map(s => starBtn(s, 'misc'))}</div>}
 
-      {/* 煞星 */}
-      {shaStars.length > 0 && (
-        <div className="flex flex-wrap gap-x-1">
-          {shaStars.map(s => (
-            <span key={s.name} className="inline-flex items-center text-[9px] text-red-500/60 leading-tight cursor-pointer"
-              onClick={e => { e.stopPropagation(); onStarClick?.(s); }}>
-              <HV zh={s.name} /><BrightTag level={s.brightnessRaw} mode={brightnessMode} />{s.siHua && <SiHuaBadge siHua={s.siHua} />}
-            </span>
-          ))}
-        </div>
-      )}
-
-    </motion.div>
+      {/* Chân ô: can chi (+ đại hạn trên màn hình hẹp) */}
+      <div className="pc-foot">
+        <span className="pc-gz">{STEMS_VI[stem]} {BRANCHES_VI[branch]}<span lang="zh-CN">{STEMS[stem]}{BRANCHES[branch]}</span></span>
+        {daXianAge && <span className="pc-age pc-age-foot" data-current={isCurrentDaXian || undefined}>{daXianAge[0]}–{daXianAge[1]}</span>}
+      </div>
+    </div>
   );
 }
