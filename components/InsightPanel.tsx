@@ -184,7 +184,8 @@ function AiContent({ text, streaming }: { text: string; streaming?: boolean }) {
           <div key={i} className="text-[11px] leading-relaxed" style={{ color: 'var(--t-text2)' }}>
             {parts.map((part, j) =>
               j % 2 === 0
-                ? part
+                ? part.split(/(?<![\w*])\*(?!\s)([^*\n]+?)\*(?![\w*])/).map((seg, k) =>
+                    k % 2 === 0 ? seg : <em key={`${j}-${k}`} style={{ color: 'var(--t-gold)', fontStyle: 'normal', opacity: 0.85 }}>{seg}</em>)
                 : <strong key={j} className="font-medium" style={{ color: 'var(--t-text)' }}>{part}</strong>
             )}
           </div>
