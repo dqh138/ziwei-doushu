@@ -24,8 +24,14 @@ const maxTokens = () => {
   return Number.isFinite(n) && n > 0 ? Math.min(n, 8000) : 4000;
 };
 
+/** Đọc khóa từ biến môi trường, bỏ khoảng trắng/xuống dòng/dấu nháy lỡ dán kèm (gây lỗi header → "Connection error"). */
+function readKey(name: string): string | undefined {
+  const v = process.env[name]?.trim().replace(/^['"]|['"]$/g, '').trim();
+  return v || undefined;
+}
+
 export function aiConfigured(): boolean {
-  return provider() === 'deepseek' ? !!process.env.DEEPSEEK_API_KEY : !!process.env.ANTHROPIC_API_KEY;
+  return provider() === 'deepseek' ? !!readKey('DEEPSEEK_API_KEY') : !!readKey('ANTHROPIC_API_KEY');
 }
 
 /** Trả về luồng các đoạn chữ. */
@@ -34,9 +40,12 @@ export async function* streamCompletion(system: string, messages: ChatMessage[],
     yield* streamDeepSeek(system, messages, signal);
     return;
   }
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = readKey('ANTHROPIC_API_KEY');
   if (!apiKey) throw new AiConfigError('ANTHROPIC_API_KEY chưa được đặt');
-  const client = new Anthropic({ apiKey });
+  if (!apiKey.startsWith('sk-ant-api')) {
+    console.warn('[ai] ANTHROPIC_API_KEY không có dạng khóa API (sk-ant-api…); Anthropic có thể từ chối.');
+  }
+  const client = new Anthropic({ apiKey, maxRetries: 1 });
   const stream = client.messages.stream(
     {
       model: process.env.AI_MODEL || 'claude-sonnet-5-5',
@@ -54,7 +63,7 @@ export async function* streamCompletion(system: string, messages: ChatMessage[],
 }
 
 async function* streamDeepSeek(system: string, messages: ChatMessage[], signal?: AbortSignal): AsyncGenerator<string> {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = readKey('DEEPSEEK_API_KEY');
   if (!apiKey) throw new AiConfigError('DEEPSEEK_API_KEY chưa được đặt');
   const res = await fetch(process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/chat/completions', {
     method: 'POST',
