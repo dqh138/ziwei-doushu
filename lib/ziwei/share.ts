@@ -1,5 +1,6 @@
 import type { BirthFormState } from '@/components/BirthForm';
 import type { BirthInfo } from './types';
+import { birthInfoFromForm } from './birth-time';
 
 /** 根据北京时间 + 经度计算真太阳时时辰支 (0-11) */
 export function calcTrueSolarBranch(clockHour: number, clockMinute: number, longitude: number): number {
@@ -18,33 +19,8 @@ export function calcTrueSolarBranch(clockHour: number, clockMinute: number, long
  * 这与「时辰支同为子(0)」并不冲突——子时分早晚两段，需要在日期上区分。
  */
 export function formToBirthInfo(form: BirthFormState): BirthInfo {
-  let y = parseInt(form.year) || 0;
-  let m = parseInt(form.month) || 0;
-  let d = parseInt(form.day) || 0;
-
-  // 晚子时（23:00-23:59）按次日处理：用 Date 对象自动处理月末/年末进位
-  if (!form.unknownTime) {
-    const clockHour = parseInt(form.clockHour) || 0;
-    if (clockHour === 23 && y > 0 && m > 0 && d > 0) {
-      const next = new Date(y, m - 1, d + 1);
-      y = next.getFullYear();
-      m = next.getMonth() + 1;
-      d = next.getDate();
-    }
-  }
-
-  const hour = form.unknownTime
-    ? 0
-    : calcTrueSolarBranch(parseInt(form.clockHour) || 0, parseInt(form.clockMinute) || 0, form.longitude);
-  return {
-    year: y, month: m, day: d,
-    hour,
-    gender: form.gender,
-    name: form.name || undefined,
-    province: form.province || undefined,
-    city: form.city || undefined,
-    longitude: form.province ? form.longitude : undefined,
-  };
+  // Dùng chung cách tính với form: múi giờ nơi sinh (VN/CN) + giờ mặt trời thật + giờ Tý muộn sang ngày sau
+  return birthInfoFromForm(form);
 }
 
 /** BirthFormState → URLSearchParams（用于分享链接） */
@@ -60,6 +36,7 @@ export function formToSearchParams(form: BirthFormState): URLSearchParams {
     p.set('h', form.clockHour);
     p.set('mi', form.clockMinute);
   }
+  if (form.country) p.set('co', form.country);
   if (form.province) p.set('p', form.province);
   if (form.city) p.set('c', form.city);
   if (form.longitude && form.longitude !== 120) p.set('lo', String(form.longitude));
@@ -81,6 +58,8 @@ export function searchParamsToForm(params: URLSearchParams): Partial<BirthFormSt
     unknownTime: params.get('u') === '1',
     clockHour: params.get('h') || '8',
     clockMinute: params.get('mi') || '0',
+    // link cũ không có 'co' là link của bản gốc Trung Quốc
+    country: params.get('co') === 'VN' ? 'VN' : 'CN',
     province: params.get('p') || '',
     city: params.get('c') || '',
     longitude: parseFloat(params.get('lo') || '120'),
