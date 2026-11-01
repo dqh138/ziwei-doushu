@@ -1,6 +1,11 @@
 'use client';
 import { motion } from 'framer-motion';
 import type { FamousPerson } from '@/lib/ziwei/famous';
+import Bi from './Bi';
+
+const CATEGORY_VI: Record<string, string> = {
+  '商业': 'Kinh doanh', '文艺': 'Văn nghệ', '科技': 'Khoa học kỹ thuật', '体育': 'Thể thao', '历史': 'Lịch sử',
+};
 
 const CATEGORY_COLORS: Record<string, string> = {
   '商业': '#4ade80',
@@ -25,10 +30,10 @@ export default function FamousPersonCard({ person }: { person: FamousPerson }) {
     >
       <div className="text-[10px] tracking-widest mb-3 flex items-center gap-2" style={{ color: 'var(--t-faint)' }}>
         <span style={{ color: catColor, opacity: 0.9, fontSize: '12px' }}>★</span>
-        名人命盘
+        <Bi vi="Lá số người nổi tiếng" zh="名人命盘" />
         <span className="text-[9px] px-2 py-0.5 rounded-full ml-auto"
           style={{ color: catColor, background: catColor + '18', border: `1px solid ${catColor}40` }}>
-          {person.category}
+          <Bi vi={CATEGORY_VI[person.category] ?? person.category} zh={person.category} />
         </span>
       </div>
 
@@ -38,7 +43,7 @@ export default function FamousPersonCard({ person }: { person: FamousPerson }) {
             {person.name}
           </span>
           <span className="text-[11px]" style={{ color: 'var(--t-faint)' }}>
-            {person.year}年 · {person.gender === 'male' ? '男命' : '女命'}
+            <Bi vi={`Năm ${person.year}`} zh={`${person.year}年`} /> · {person.gender === 'male' ? <Bi vi="Nam mệnh" zh="男命" /> : <Bi vi="Nữ mệnh" zh="女命" />}
           </span>
         </div>
 
@@ -52,12 +57,12 @@ export default function FamousPersonCard({ person }: { person: FamousPerson }) {
             background: catColor + '0c',
             border: `1px solid ${catColor}25`,
           }}>
-          <span style={{ color: catColor, fontWeight: 600, marginRight: '4px' }}>命盘亮点：</span>
+          <span style={{ color: catColor, fontWeight: 600, marginRight: '4px' }}><Bi vi="Điểm nổi bật của lá số" zh="命盘亮点" />: </span>
           {person.notable}
         </div>
 
         <div className="text-[10px] mt-2" style={{ color: 'var(--t-faint)', opacity: 0.6, lineHeight: 1.5 }}>
-          ⚠️ 出生时辰为公开文献估算值，仅供研究参考。下方 AI 解读基于此命盘自动生成，与本人无关。
+          ⚠️ <Bi block vi="Giờ sinh là giá trị ước tính từ tài liệu công khai, chỉ để tham khảo nghiên cứu. Phần luận giải AI bên dưới được sinh tự động từ lá số này, không liên quan đến bản thân người đó." zh="出生时辰为公开文献估算值，仅供研究参考。下方 AI 解读基于此命盘自动生成，与本人无关。" />
         </div>
       </div>
     </motion.div>

@@ -9,8 +9,11 @@ interface ScrollIntroProps {
 }
 
 const BEIDOU = ['天枢', '天璇', '天玑', '天权', '玉衡', '开阳', '摇光'];
+const BEIDOU_VI: Record<string, string> = {
+  天枢: 'Thiên Xu', 天璇: 'Thiên Toàn', 天玑: 'Thiên Cơ', 天权: 'Thiên Quyền', 玉衡: 'Ngọc Hành', 开阳: 'Khai Dương', 摇光: 'Dao Quang',
+};
 
-export default function ScrollIntro({ onComplete, skipLabel = '跳 过' }: ScrollIntroProps) {
+export default function ScrollIntro({ onComplete, skipLabel = 'Bỏ qua · 跳 过' }: ScrollIntroProps) {
   // visible：整个 intro 是否在显示
   // unrolled：卷轴是否已展开（控制内容浮现）
   const [visible, setVisible] = useState(true);
@@ -132,13 +135,15 @@ export default function ScrollIntro({ onComplete, skipLabel = '跳 过' }: Scrol
                 <div style={{
                   fontSize: 'clamp(10px, 1.1vw, 12px)',
                   color: '#8b5d18',
-                  letterSpacing: '0.45em',
+                  letterSpacing: '0.2em',
                   marginBottom: 'clamp(20px, 3vh, 36px)',
                   fontFamily: '"STKaiti", "Kaiti SC", serif',
-                  whiteSpace: 'nowrap',
+                  textAlign: 'center',
                   opacity: 0.85,
                 }}>
-                  {BEIDOU.join(' · ')}
+                  {BEIDOU.map(n => BEIDOU_VI[n]).join(' · ')}
+                  <br />
+                  <span style={{ opacity: 0.7 }}>{BEIDOU.join(' · ')}</span>
                 </div>
 
                 {/* 烫金细线 */}
@@ -148,8 +153,19 @@ export default function ScrollIntro({ onComplete, skipLabel = '跳 过' }: Scrol
                   marginBottom: 'clamp(16px, 2.5vh, 28px)',
                 }} />
 
-                {/* 大字「紫微命盘」 */}
-                <h1 style={{
+                {/* 越南语标题 + 大字「紫微命盘」 */}
+                <div style={{
+                  fontSize: 'clamp(22px, 3.6vw, 48px)',
+                  fontWeight: 700,
+                  color: '#1a1208',
+                  letterSpacing: '0.08em',
+                  lineHeight: 1.1,
+                  marginBottom: 'clamp(8px, 1.5vh, 16px)',
+                  whiteSpace: 'nowrap',
+                }}>
+                  Lá Số Tử Vi
+                </div>
+                <h1 lang="zh-CN" style={{
                   fontSize: 'clamp(48px, 8vw, 110px)',
                   fontWeight: 700,
                   color: '#1a1208',
@@ -166,23 +182,27 @@ export default function ScrollIntro({ onComplete, skipLabel = '跳 过' }: Scrol
                 <div style={{
                   fontSize: 'clamp(13px, 1.5vw, 18px)',
                   color: '#6b4818',
-                  letterSpacing: '0.4em',
+                  letterSpacing: '0.12em',
                   fontFamily: '"STKaiti", "Kaiti SC", serif',
                   marginTop: 'clamp(16px, 2.5vh, 24px)',
                   marginBottom: '6px',
-                  whiteSpace: 'nowrap',
+                  textAlign: 'center',
                 }}>
-                  观 天 之 象 · 察 人 之 命
+                  Quan thiên chi tượng · Sát nhân chi mệnh
+                  <br />
+                  <span lang="zh-CN">观 天 之 象 · 察 人 之 命</span>
                 </div>
                 <div style={{
                   fontSize: 'clamp(11px, 1.2vw, 14px)',
                   color: '#8b6410',
-                  letterSpacing: '0.3em',
+                  letterSpacing: '0.1em',
                   fontFamily: '"STSong", serif',
-                  whiteSpace: 'nowrap',
+                  textAlign: 'center',
                   opacity: 0.85,
                 }}>
-                  倪海厦《天纪》正宗体系
+                  Hệ thống chính tông 《Thiên Kỷ》 Nghê Hải Hạ
+                  <br />
+                  <span lang="zh-CN">倪海厦《天纪》正宗体系</span>
                 </div>
 
                 {/* 朱砂方印 */}

@@ -5,6 +5,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ALL_BOOKS, getBookBySlug } from '@/lib/classics';
+import Bi from '@/components/Bi';
+import { libVi } from '../vi';
 
 export async function generateStaticParams() {
   return ALL_BOOKS.map(b => ({ book: b.slug }));
@@ -15,8 +17,8 @@ export async function generateMetadata({ params }: { params: Promise<{ book: str
   const book = getBookBySlug(slug);
   if (!book) return {};
   return {
-    title: `《${book.title}》· ${book.dynasty} · 紫微斗数古籍原典库`,
-    description: book.intro,
+    title: `《${libVi(book.title)}》 · Kho cổ thư Tử Vi | 《${book.title}》· ${book.dynasty} · 紫微斗数古籍原典库`,
+    description: `${libVi(book.intro)} ${book.intro}`,
   };
 }
 
@@ -30,13 +32,13 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
       <div className="px-6 py-4 flex items-center justify-between"
         style={{ borderBottom: '1px solid rgba(184,146,42,0.15)', background: 'var(--bg-page)' }}>
         <Link href="/library" style={{ fontSize: '12px', color: 'var(--ac)', letterSpacing: '0.3em', textDecoration: 'none' }}>
-          ← 古籍库
+          ← <Bi vi="Kho cổ thư" zh="古籍库" />
         </Link>
         <div style={{ fontSize: '12px', color: 'var(--tx-3)', letterSpacing: '0.2em' }}>
-          《{book.title}》
+          《{libVi(book.title)}》 <span className="bi-zh">《{book.title}》</span>
         </div>
         <Link href="/" style={{ fontSize: '12px', color: 'var(--ac)', letterSpacing: '0.2em', textDecoration: 'none' }}>
-          首页 →
+          <Bi vi="Trang chủ" zh="首页" /> →
         </Link>
       </div>
 
@@ -44,20 +46,21 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         {/* 书名信息 */}
         <div className="text-center mb-12">
           <div style={{ fontSize: '11px', color: 'var(--tx-3)', letterSpacing: '0.3em', marginBottom: '8px' }}>
-            {book.dynasty} · {book.author}
+            <Bi vi={`${libVi(book.dynasty)} · ${libVi(book.author)}`} zh={`${book.dynasty} · ${book.author}`} />
           </div>
-          <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--tx-0)', letterSpacing: '0.15em', marginBottom: '14px' }}>
-            《{book.title}》
+          <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--tx-0)', letterSpacing: '0.06em', marginBottom: '14px' }}>
+            《{libVi(book.title)}》
+            <span className="block bi-zh" lang="zh-CN">《{book.title}》</span>
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--tx-2)', lineHeight: 1.8, maxWidth: '500px', margin: '0 auto' }}>
-            {book.intro}
+            <Bi block vi={libVi(book.intro)} zh={book.intro} />
           </p>
         </div>
 
         {/* 章节目录 */}
         <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid rgba(184,146,42,0.2)', overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(184,146,42,0.15)', fontSize: '11px', color: 'var(--tx-3)', letterSpacing: '0.3em' }}>
-            CHAPTERS · 章节目录
+            CHAPTERS · <Bi vi="Mục lục chương" zh="章节目录" />
           </div>
           {book.chapters.map((chapter, i) => (
             <Link
@@ -80,16 +83,16 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '15px', color: 'var(--tx-0)', fontWeight: 500, letterSpacing: '0.08em', marginBottom: '2px' }}>
-                  {chapter.title}
+                  <Bi vi={libVi(chapter.title)} zh={chapter.title} />
                 </div>
                 {chapter.subtitle && (
                   <div style={{ fontSize: '11px', color: 'var(--tx-3)' }}>
-                    {chapter.subtitle}
+                    <Bi vi={libVi(chapter.subtitle)} zh={chapter.subtitle} />
                   </div>
                 )}
               </div>
               <div style={{ fontSize: '10px', color: 'var(--tx-3)', letterSpacing: '0.1em' }}>
-                {chapter.paragraphs.length} 段
+                <Bi vi={`${chapter.paragraphs.length} đoạn`} zh={`${chapter.paragraphs.length} 段`} />
               </div>
               <div style={{ fontSize: '12px', color: 'var(--ac)' }}>→</div>
             </Link>

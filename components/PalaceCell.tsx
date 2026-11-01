@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import type { Palace, Star } from '@/lib/ziwei/types';
 import { STEMS, BRANCHES } from '@/lib/ziwei/constants';
 import clsx from 'clsx';
+import Bi, { HV, hv } from './Bi';
+import { STEMS_VI, BRANCHES_VI, SIHUA_VI } from '@/lib/ziwei/hanviet';
 
 interface PalaceCellProps {
   palace: Palace;
@@ -47,8 +49,9 @@ const SiHuaBadge = ({
       )}
       onClick={onClick}
     >
-      {overlay && label && <span className="mr-px opacity-70">{label}</span>}
-      {siHua}
+      {overlay && label && <span className="mr-px opacity-70">{hv(label)}</span>}
+      {SIHUA_VI[siHua] ?? siHua}
+      <span className="bi-zh ml-px" lang="zh-CN">{overlay && label ? label : ''}{siHua}</span>
     </span>
   );
 };
@@ -59,6 +62,7 @@ export default function PalaceCell({
 }: PalaceCellProps) {
   const { branch, stem, name, stars, daXianAge, isCurrentDaXian, isMingGong, isShenGong } = palace;
   const ganzhi = `${STEMS[stem]}${BRANCHES[branch]}`;
+  const ganzhiVi = `${STEMS_VI[stem]} ${BRANCHES_VI[branch]}`;
 
   const majorStars = stars.filter(s => s.type === 'major');
   const luckyStars = stars.filter(s => s.type === 'lucky');
@@ -110,23 +114,23 @@ export default function PalaceCell({
         )}
           style={!isMingGong && !isShenGong ? { color: 'var(--t-faint)' } : undefined}
         >
-          {name}
+          <HV zh={name} />
         </span>
         {isMingGong && (
-          <span className="text-[7px] text-amber-500/80 border border-amber-500/30 px-0.5 rounded leading-tight">命</span>
+          <span className="text-[7px] text-amber-500/80 border border-amber-500/30 px-0.5 rounded leading-tight">Mệnh 命</span>
         )}
         {isShenGong && (
-          <span className="text-[7px] text-sky-500/80 border border-sky-500/30 px-0.5 rounded leading-tight">身</span>
+          <span className="text-[7px] text-sky-500/80 border border-sky-500/30 px-0.5 rounded leading-tight">Thân 身</span>
         )}
       </div>
 
       {/* 干支 */}
-      <div className="text-[9px] font-mono mb-1" style={{ color: 'var(--t-faint)', opacity: 0.75 }}>{ganzhi}</div>
+      <div className="text-[9px] font-mono mb-1" style={{ color: 'var(--t-faint)', opacity: 0.75 }}>{ganzhiVi} <span className="bi-zh" lang="zh-CN">{ganzhi}</span></div>
 
       {/* 主星 */}
       <div className="flex flex-col gap-0.5 flex-1">
         {majorStars.length === 0 && (
-          <span className="text-[10px] italic" style={{ color: 'var(--t-faint)', opacity: 0.6 }}>空宫</span>
+          <span className="text-[10px] italic" style={{ color: 'var(--t-faint)', opacity: 0.6 }}><Bi vi="Vô chính diệu" zh="空宫" /></span>
         )}
         {majorStars.map((star) => {
           const overlaySiHua = overlayStarSiHua?.[star.name];
@@ -140,7 +144,7 @@ export default function PalaceCell({
                 'text-[13px] leading-tight font-bold tracking-tight cursor-pointer hover:brightness-125 transition-all',
                 star.brightness === 'bright' ? 'text-amber-300' : star.brightness === 'dim' ? 'text-amber-700/80' : 'text-amber-500',
               )}>
-                {star.name}
+                <HV zh={star.name} />
               </span>
               {star.siHua && <SiHuaBadge siHua={star.siHua} />}
               {overlaySiHua && (
@@ -166,7 +170,7 @@ export default function PalaceCell({
             const overlaySiHua = overlayStarSiHua?.[s.name];
             return (
               <span key={s.name} className="inline-flex items-center text-[9px] text-sky-500/70 leading-tight">
-                {s.name}
+                <HV zh={s.name} />
                 {s.siHua && <SiHuaBadge siHua={s.siHua} />}
                 {overlaySiHua && (
                   <SiHuaBadge
@@ -190,7 +194,7 @@ export default function PalaceCell({
         <div className="flex flex-wrap gap-x-1">
           {shaStars.map(s => (
             <span key={s.name} className="text-[9px] text-red-500/60 leading-tight">
-              {s.name}{s.siHua && <SiHuaBadge siHua={s.siHua} />}
+              <HV zh={s.name} />{s.siHua && <SiHuaBadge siHua={s.siHua} />}
             </span>
           ))}
         </div>

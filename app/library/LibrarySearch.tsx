@@ -8,6 +8,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Bi, { bi } from '@/components/Bi';
 
 export default function LibrarySearch() {
   const [q, setQ] = useState('');
@@ -36,7 +37,7 @@ export default function LibrarySearch() {
         value={q}
         onChange={e => setQ(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && submit()}
-        placeholder="搜索古籍原文，如：七杀朝斗 / 双禄朝垣 / 化忌"
+        placeholder={bi('Tìm trong nguyên văn cổ thư (gõ chữ Hán), ví dụ: 七杀朝斗 / 双禄朝垣 / 化忌', '搜索古籍原文，如：七杀朝斗 / 双禄朝垣 / 化忌')}
         style={{
           flex: 1,
           padding: '10px 14px',
@@ -63,7 +64,7 @@ export default function LibrarySearch() {
           opacity: q.trim() ? 1 : 0.5,
         }}
       >
-        {isPending ? '…' : '搜索'}
+        {isPending ? '…' : <Bi vi="Tìm" zh="搜索" />}
       </button>
     </div>
   );

@@ -7,10 +7,12 @@
 import Link from 'next/link';
 import { ALL_BOOKS, TOTAL_PARAGRAPHS } from '@/lib/classics';
 import LibrarySearch from './LibrarySearch';
+import Bi from '@/components/Bi';
+import { libVi } from './vi';
 
 export const metadata = {
-  title: '倪师方法论 · 古籍原典库 · 紫微斗数全集 / 全书 / 骨髓赋',
-  description: '紫微斗数权威古籍全文检索：《紫微斗数全集》《紫微斗数全书》《骨髓赋》倪海厦《天纪》引证来源',
+  title: 'Kho cổ thư nguyên điển · Tử Vi Đẩu Số Toàn Tập / Toàn Thư / Cốt Tủy Phú | 倪师方法论 · 古籍原典库 · 紫微斗数全集 / 全书 / 骨髓赋',
+  description: 'Tra cứu toàn văn cổ thư Tử Vi Đẩu Số: 《Tử Vi Đẩu Số Toàn Tập》《Tử Vi Đẩu Số Toàn Thư》《Cốt Tủy Phú》, nguồn dẫn chứng của 《Thiên Kỷ》 Nghê Hải Hạ. 紫微斗数权威古籍全文检索：《紫微斗数全集》《紫微斗数全书》《骨髓赋》倪海厦《天纪》引证来源',
 };
 
 export default function LibraryHomePage() {
@@ -20,13 +22,13 @@ export default function LibraryHomePage() {
       <div className="px-6 py-4 flex items-center justify-between"
         style={{ borderBottom: '1px solid rgba(184,146,42,0.15)', background: 'var(--bg-page)' }}>
         <Link href="/" style={{ fontSize: '12px', color: 'var(--ac)', letterSpacing: '0.3em', textDecoration: 'none' }}>
-          ← 返回首页
+          ← <Bi vi="Về trang chủ" zh="返回首页" />
         </Link>
         <div style={{ fontSize: '12px', color: 'var(--tx-3)', letterSpacing: '0.3em' }}>
-          古籍原典库 · CLASSICS
+          <Bi vi="Kho cổ thư" zh="古籍原典库" /> · CLASSICS
         </div>
         <Link href="/chart" style={{ fontSize: '12px', color: 'var(--ac)', letterSpacing: '0.2em', textDecoration: 'none' }}>
-          起盘 →
+          <Bi vi="Lập lá số" zh="起盘" /> →
         </Link>
       </div>
 
@@ -37,12 +39,15 @@ export default function LibraryHomePage() {
           <span style={{ fontSize: '11px', color: 'var(--ac)', letterSpacing: '0.4em' }}>NI HAI XIA · CURRICULUM</span>
           <div style={{ height: '1px', width: '48px', background: 'linear-gradient(to left, transparent, rgba(184,146,42,0.4))' }} />
         </div>
-        <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--tx-0)', letterSpacing: '0.15em', marginBottom: '12px' }}>
-          倪师方法论 · 古籍原典库
+        <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 700, color: 'var(--tx-0)', letterSpacing: '0.05em', marginBottom: '12px' }}>
+          <Bi block vi="Phương pháp luận Nghê sư · Kho cổ thư nguyên điển" zh="倪师方法论 · 古籍原典库" />
         </h1>
         <p style={{ fontSize: '14px', color: 'var(--tx-2)', letterSpacing: '0.1em', maxWidth: '600px', margin: '0 auto', lineHeight: 1.7 }}>
-          紫微斗数权威古籍全文检索<br />
-          收录 <strong style={{ color: 'var(--ac)' }}>{ALL_BOOKS.length}</strong> 部古籍 · 共 <strong style={{ color: 'var(--ac)' }}>{TOTAL_PARAGRAPHS}</strong> 段精华
+          <Bi block vi="Tra cứu toàn văn cổ thư uy tín của Tử Vi Đẩu Số" zh="紫微斗数权威古籍全文检索" />
+          <Bi block
+            vi={<>Thu thập <strong style={{ color: 'var(--ac)' }}>{ALL_BOOKS.length}</strong> bộ cổ thư · tổng cộng <strong style={{ color: 'var(--ac)' }}>{TOTAL_PARAGRAPHS}</strong> đoạn tinh hoa</>}
+            zh={<>收录 {ALL_BOOKS.length} 部古籍 · 共 {TOTAL_PARAGRAPHS} 段精华</>}
+          />
         </p>
       </div>
 
@@ -71,18 +76,19 @@ export default function LibraryHomePage() {
               className="hover:shadow-lg"
             >
               <div style={{ fontSize: '11px', color: 'var(--tx-3)', letterSpacing: '0.2em', marginBottom: '6px' }}>
-                {book.dynasty} · {book.author.split(' ')[0]}
+                <Bi vi={`${libVi(book.dynasty)} · ${libVi(book.author)}`} zh={`${book.dynasty} · ${book.author.split(' ')[0]}`} />
               </div>
               <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--tx-0)', marginBottom: '10px', letterSpacing: '0.1em' }}>
-                《{book.title}》
+                《{libVi(book.title)}》
+                <div className="bi-zh" lang="zh-CN">《{book.title}》</div>
               </div>
               <div style={{ fontSize: '12px', color: 'var(--tx-2)', lineHeight: 1.7, marginBottom: '14px' }}>
-                {book.intro}
+                <Bi block vi={libVi(book.intro)} zh={book.intro} />
               </div>
               <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--tx-3)' }}>
-                <span>{book.chapters.length} 章节</span>
+                <span><Bi vi={`${book.chapters.length} chương`} zh={`${book.chapters.length} 章节`} /></span>
                 <span style={{ color: 'rgba(184,146,42,0.4)' }}>·</span>
-                <span>{book.chapters.reduce((s, c) => s + c.paragraphs.length, 0)} 段精华</span>
+                <span><Bi vi={`${book.chapters.reduce((s, c) => s + c.paragraphs.length, 0)} đoạn tinh hoa`} zh={`${book.chapters.reduce((s, c) => s + c.paragraphs.length, 0)} 段精华`} /></span>
               </div>
               <div style={{
                 display: 'inline-flex',
@@ -92,7 +98,7 @@ export default function LibraryHomePage() {
                 letterSpacing: '0.15em',
                 fontWeight: 500,
               }}>
-                进入查阅 →
+                <Bi vi="Vào tra cứu" zh="进入查阅" /> →
               </div>
             </Link>
           ))}
@@ -101,12 +107,10 @@ export default function LibraryHomePage() {
         {/* 底部说明 */}
         <div style={{ marginTop: '60px', padding: '24px', background: 'rgba(184,146,42,0.05)', borderRadius: '10px', textAlign: 'center' }}>
           <div style={{ fontSize: '11px', color: 'var(--ac-dim)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: '8px' }}>
-            关于本库
+            <Bi vi="Về kho cổ thư" zh="关于本库" />
           </div>
           <div style={{ fontSize: '12px', color: 'var(--tx-2)', lineHeight: 1.8, maxWidth: '600px', margin: '0 auto' }}>
-            所收录古籍均为公版（明代刊本）。<br />
-            内容持续完善，未来将补全《紫微斗数全集》全本与倪海厦《天纪》引证目录。<br />
-            如发现任何错误请联系我们。
+            <Bi block vi="Các cổ thư thu thập đều thuộc phạm vi công cộng (bản khắc đời Minh). Nội dung liên tục được hoàn thiện, sau này sẽ bổ sung trọn bộ 《Tử Vi Đẩu Số Toàn Tập》 và mục lục dẫn chứng 《Thiên Kỷ》 của Nghê Hải Hạ. Nếu phát hiện sai sót, xin liên hệ với chúng tôi." zh="所收录古籍均为公版（明代刊本）。内容持续完善，未来将补全《紫微斗数全集》全本与倪海厦《天纪》引证目录。如发现任何错误请联系我们。" />
           </div>
         </div>
       </div>

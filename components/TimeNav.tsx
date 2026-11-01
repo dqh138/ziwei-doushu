@@ -2,6 +2,8 @@
 import { motion } from 'framer-motion';
 import { STEMS, SI_HUA_TABLE } from '@/lib/ziwei/constants';
 import type { ZiweiChart } from '@/lib/ziwei/types';
+import Bi, { hv } from './Bi';
+import { SIHUA_VI } from '@/lib/ziwei/hanviet';
 
 export type TimeView = 'mingpan' | 'daxian' | 'liunian';
 
@@ -85,7 +87,7 @@ export default function TimeNav({
           active={view === 'mingpan'}
           onClick={() => onViewChange('mingpan')}
         >
-          本命
+          <Bi vi="Bản mệnh" zh="本命" />
         </TabButton>
 
         {/* 大限 */}
@@ -93,7 +95,7 @@ export default function TimeNav({
           active={view === 'daxian'}
           onClick={() => onViewChange('daxian')}
         >
-          {currentDx ? `大限 ${currentDx.startAge}–${currentDx.endAge}` : '大限'}
+          <Bi vi="Đại hạn" zh="大限" />{currentDx ? ` ${currentDx.startAge}–${currentDx.endAge}` : ''}
         </TabButton>
 
         {/* 流年 — 含年份切换 */}
@@ -113,7 +115,7 @@ export default function TimeNav({
             className="text-[10px] font-medium flex-1 text-center"
             style={{ color: view === 'liunian' ? 'var(--t-gold)' : 'var(--t-faint)' }}
           >
-            流年
+            <Bi vi="Lưu niên" zh="流年" />
           </button>
           {/* 年份 +/- */}
           <div className="flex items-center gap-0.5">
@@ -151,14 +153,14 @@ export default function TimeNav({
           className="flex items-center gap-2 mt-1.5 px-1 flex-wrap"
         >
           <span className="text-[9px]" style={{ color: 'var(--t-faint)' }}>
-            {view === 'daxian' ? '大限' : `${liunianYear}`}·{overlayInfo.stemName}年四化：
+            {view === 'daxian' ? <Bi vi="Đại hạn" zh="大限" /> : `${liunianYear}`} · <Bi vi={`Tứ Hóa can ${hv(overlayInfo.stemName)}`} zh={`${overlayInfo.stemName}年四化`} />:
           </span>
           {(['禄', '权', '科', '忌'] as const).map(sh => {
             const starName = Object.keys(overlayInfo.overlay).find(k => overlayInfo.overlay[k] === sh);
             if (!starName) return null;
             return (
               <span key={sh} className="text-[9px] font-medium" style={{ color: SIHUA_COLORS[sh] }}>
-                {starName}化{sh}
+                <Bi vi={`${hv(starName)} Hóa ${SIHUA_VI[sh]}`} zh={`${starName}化${sh}`} />
               </span>
             );
           })}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ZiweiChart } from '@/lib/ziwei/types';
 import ShareCardCanvas, { captureShareCard, downloadDataURL } from './ShareCardCanvas';
+import Bi, { bi } from './Bi';
 
 interface ShareModalProps {
   open: boolean;
@@ -40,10 +41,10 @@ export default function ShareModal({ open, onClose, shareUrl, chart, birth, high
     try {
       const dataURL = await captureShareCard();
       if (!dataURL) {
-        alert('图片生成失败，请截图保存或刷新重试');
+        alert(bi('Tạo ảnh thất bại, vui lòng chụp màn hình hoặc tải lại trang rồi thử lại', '图片生成失败，请截图保存或刷新重试', '\n'));
         return;
       }
-      downloadDataURL(dataURL, `紫微命盘_${Date.now()}.png`);
+      downloadDataURL(dataURL, `la-so-tu-vi_紫微命盘_${Date.now()}.png`);
     } finally {
       setDownloading(false);
     }
@@ -82,7 +83,7 @@ export default function ShareModal({ open, onClose, shareUrl, chart, birth, high
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#3d2f10', letterSpacing: '0.12em' }}>
-                ✦ 分享命盘
+                ✦ <Bi vi="Chia sẻ lá số" zh="分享命盘" />
               </div>
               <button onClick={onClose}
                 style={{
@@ -101,7 +102,7 @@ export default function ShareModal({ open, onClose, shareUrl, chart, birth, high
             </div>
 
             <div style={{ padding: '0 20px 12px', textAlign: 'center', fontSize: '11px', color: '#a89b7c', letterSpacing: '0.05em' }}>
-              ↑ 朋友圈 / 微信 / 抖音 / 小红书 都能用
+              ↑ <Bi vi="Dùng được cho Facebook / Zalo / TikTok / Instagram" zh="朋友圈 / 微信 / 抖音 / 小红书 都能用" />
             </div>
 
             {/* 操作区 */}
@@ -116,7 +117,7 @@ export default function ShareModal({ open, onClose, shareUrl, chart, birth, high
                   opacity: downloading ? 0.7 : 1,
                 }}
               >
-                {downloading ? '生成中…' : '⬇ 下载分享图'}
+                {downloading ? <Bi vi="Đang tạo…" zh="生成中…" /> : <>⬇ <Bi vi="Tải ảnh chia sẻ" zh="下载分享图" /></>}
               </button>
 
               <button onClick={copyLink}
@@ -127,7 +128,7 @@ export default function ShareModal({ open, onClose, shareUrl, chart, birth, high
                   cursor: 'pointer',
                 }}
               >
-                {copied ? '✓ 已复制链接' : '🔗 复制命盘链接'}
+                {copied ? <>✓ <Bi vi="Đã sao chép liên kết" zh="已复制链接" /></> : <>🔗 <Bi vi="Sao chép liên kết lá số" zh="复制命盘链接" /></>}
               </button>
 
               <div style={{
@@ -135,9 +136,9 @@ export default function ShareModal({ open, onClose, shareUrl, chart, birth, high
                 padding: '10px 12px', background: 'rgba(184,146,42,0.05)',
                 borderRadius: '8px', marginTop: '4px',
               }}>
-                <div style={{ marginBottom: '4px', fontWeight: 600, color: '#8b6a14' }}>使用提示：</div>
-                · 下载图片可发朋友圈 / 抖音 / 小红书<br />
-                · 复制链接发给微信好友，对方点开看自己的盘起点
+                <div style={{ marginBottom: '4px', fontWeight: 600, color: '#8b6a14' }}><Bi vi="Mẹo sử dụng" zh="使用提示" />:</div>
+                · <Bi vi="Tải ảnh về để đăng Facebook / TikTok / Instagram" zh="下载图片可发朋友圈 / 抖音 / 小红书" /><br />
+                · <Bi vi="Gửi liên kết cho bạn bè qua Zalo / Messenger, họ mở ra là lập được lá số của chính mình" zh="复制链接发给微信好友，对方点开看自己的盘起点" />
               </div>
             </div>
           </motion.div>

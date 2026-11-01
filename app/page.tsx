@@ -5,6 +5,13 @@ import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'fra
 import StarField from '@/components/StarField';
 import { useTheme, type Theme } from '@/components/ThemeProvider';
 import AnnouncementModal from '@/components/AnnouncementModal';
+import Bi, { bi, hv, HV } from '@/components/Bi';
+import { HOME_VI } from './home-vi';
+
+/** Song ngữ tra từ điển trang chủ: tiếng Việt trước, tiếng Trung sau */
+function T({ zh, block }: { zh: string; block?: boolean }) {
+  return <Bi vi={HOME_VI[zh] ?? hv(zh)} zh={zh} block={block} />;
+}
 
 // ─── 滚动入场 wrapper ────────────────────────────────────
 function FadeIn({
@@ -44,7 +51,7 @@ function ThemeToggle() {
       onClick={toggle}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.93 }}
-      aria-label={isDark ? '切换亮色主题' : '切换暗色主题'}
+      aria-label={isDark ? bi('Chuyển sang giao diện sáng', '切换亮色主题') : bi('Chuyển sang giao diện tối', '切换暗色主题')}
       className="flex items-center gap-2 px-3 py-1.5 rounded-full border"
       style={{
         borderColor: isDark ? 'rgba(212,168,67,0.3)' : 'rgba(140,100,20,0.35)',
@@ -73,7 +80,7 @@ function ThemeToggle() {
           color: isDark ? 'rgba(212,180,100,0.85)' : 'rgba(110,72,8,0.8)',
           transition: 'color 0.35s ease',
         }}>
-        {isDark ? '暗色' : '亮色'}
+        {isDark ? <Bi vi="Tối" zh="暗色" /> : <Bi vi="Sáng" zh="亮色" />}
       </span>
     </motion.button>
   );
@@ -300,7 +307,7 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
           })}
         </div>
         <p className="text-[10px] tracking-widest transition-colors duration-300"
-          style={{ color: c.textFaint }}>倪海厦排盘法</p>
+          style={{ color: c.textFaint }}><T zh="倪海厦排盘法" /></p>
       </div>
     );
   }
@@ -316,7 +323,7 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
         ].map(group => (
           <div key={group.group}>
             <div className="text-[11px] tracking-widest mb-2 transition-colors duration-300"
-              style={{ color: c.textFaint }}>{group.group}</div>
+              style={{ color: c.textFaint }}><T zh={group.group} /></div>
             <div className="flex flex-wrap gap-1.5">
               {group.stars.map(s => (
                 <motion.button key={s}
@@ -330,7 +337,7 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
                     background: sel === s ? `${c.goldLine}30` : 'transparent',
                     fontWeight: sel === s ? 600 : 400,
                   }}>
-                  {s}
+                  <HV zh={s} />
                 </motion.button>
               ))}
             </div>
@@ -338,7 +345,7 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
         ))}
         <div>
           <div className="text-[11px] tracking-widest mb-2 transition-colors duration-300"
-            style={{ color: c.textFaint }}>四化飞星</div>
+            style={{ color: c.textFaint }}><T zh="四化飞星" /></div>
           <div className="flex gap-2 flex-wrap">
             {[['化禄', 'rgba(52,211,153,0.7)'], ['化权', 'rgba(96,165,250,0.7)'], ['化科', 'rgba(250,204,21,0.7)'], ['化忌', 'rgba(248,113,113,0.7)']].map(([label, color]) => (
               <motion.button key={label}
@@ -352,7 +359,7 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
                   background: sel === label ? `${color.replace('0.7', '0.15')}` : 'transparent',
                   fontWeight: sel === label ? 600 : 400,
                 }}>
-                {label}
+                <HV zh={label} />
               </motion.button>
             ))}
           </div>
@@ -365,10 +372,10 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
               className="rounded-xl p-4 mt-1.5"
               style={{ border: `1px solid ${c.goldLine}`, background: c.featureBg }}>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-sm font-semibold" style={{ color: c.goldSolid }}>{sel}</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ color: c.tagText, border: `1px solid ${c.goldLine}` }}>{selInfo.attr}</span>
+                <span className="text-sm font-semibold" style={{ color: c.goldSolid }}>{sel && <HV zh={sel} />}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ color: c.tagText, border: `1px solid ${c.goldLine}` }}><T zh={selInfo.attr} /></span>
               </div>
-              <p className="text-xs leading-relaxed" style={{ color: c.textSecond }}>{selInfo.brief}</p>
+              <p className="text-xs leading-relaxed" style={{ color: c.textSecond }}><T block zh={selInfo.brief} /></p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -396,7 +403,7 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
                 background: m.role === 'user' ? c.starBg : c.featureBg,
                 color: m.role === 'user' ? c.goldSolid : c.textSecond,
               }}>
-              {m.text}
+              <T block zh={m.text} />
             </div>
           </motion.div>
         ))}
@@ -425,13 +432,13 @@ function FeatureVisual({ index, colors: c }: { index: number; colors: ReturnType
               style={{ background: p.ok ? 'rgba(96,165,250,0.6)' : 'rgba(251,146,60,0.6)' }} />
             <div>
               <div className="text-[11px] font-medium"
-                style={{ color: p.ok ? 'rgba(147,197,253,0.8)' : 'rgba(253,186,116,0.8)' }}>{p.name}</div>
-              <div className="text-[10px]" style={{ color: c.textMuted }}>{p.desc}</div>
+                style={{ color: p.ok ? 'rgba(147,197,253,0.8)' : 'rgba(253,186,116,0.8)' }}><T zh={p.name} /></div>
+              <div className="text-[10px]" style={{ color: c.textMuted }}><T zh={p.desc} /></div>
             </div>
           </motion.div>
         ))}
         <div className="text-[9px] mt-2 tracking-wider text-center" style={{ color: c.textFaint }}>
-          自动识别 11 种经典格局
+          <Bi vi="Tự động nhận diện 11 cách cục kinh điển" zh="自动识别 11 种经典格局" />
         </div>
       </div>
     );
@@ -486,7 +493,7 @@ export default function HomePage() {
         }}>
         <div className="text-[11px] sm:text-xs tracking-[0.3em] sm:tracking-[0.4em] font-medium transition-colors duration-300 flex-shrink-0"
           style={{ color: c.goldSolid }}>
-          紫微命盘
+          <Bi vi="Lá số Tử Vi" zh="紫微命盘" />
         </div>
         <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
           <ThemeToggle />
@@ -495,14 +502,14 @@ export default function HomePage() {
             onClick={() => router.push('/heming')}
             className="text-[11px] sm:text-xs px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full transition-all duration-300"
             style={{ border: `1px solid ${c.navBorder}`, color: c.textMuted }}>
-            合盘
+            <Bi vi="Hợp lá số" zh="合盘" />
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
             onClick={() => router.push('/chart')}
             className="text-[11px] sm:text-xs px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full transition-all duration-300"
             style={{ border: `1px solid ${c.goldLine}`, color: c.goldSolid }}>
-            立即起盘
+            <Bi vi="Lập lá số" zh="立即起盘" />
           </motion.button>
         </div>
       </nav>
@@ -515,8 +522,8 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="flex items-center justify-center gap-3 mb-8">
             <div className="h-px w-12" style={{ background: `linear-gradient(to right, transparent, ${c.goldLine})` }} />
-            <span className="text-[11px] tracking-[0.45em] transition-colors duration-300" style={{ color: c.tagText }}>
-              紫微斗数 · 倪海厦体系
+            <span className="text-[11px] tracking-[0.2em] transition-colors duration-300" style={{ color: c.tagText }}>
+              <Bi vi="Tử Vi Đẩu Số · Thể hệ Nghê Hải Hạ" zh="紫微斗数 · 倪海厦体系" />
             </span>
             <div className="h-px w-12" style={{ background: `linear-gradient(to left, transparent, ${c.goldLine})` }} />
           </motion.div>
@@ -525,10 +532,21 @@ export default function HomePage() {
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
             style={{ position: 'relative', display: 'inline-block' }}>
+            <div
+              className={`grad-text ${theme === 'dark' ? 'grad-text-dark' : 'grad-text-light'} font-bold leading-tight mb-3`}
+              style={{
+                display: 'block',
+                fontSize: 'clamp(34px, 6vw, 76px)',
+                letterSpacing: '0.03em',
+              }}>
+              Lá Số Tử Vi
+            </div>
             <h1
+              lang="zh-CN"
               className={`grad-text ${theme === 'dark' ? 'grad-text-dark' : 'grad-text-light'} font-bold leading-none mb-5`}
               style={{
-                fontSize: 'clamp(56px, 10vw, 124px)',
+                display: 'block',
+                fontSize: 'clamp(44px, 8vw, 100px)',
                 letterSpacing: '0.07em',
               }}>
               紫微命盘
@@ -537,21 +555,21 @@ export default function HomePage() {
 
           <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.45 }}
-            className="text-base md:text-lg tracking-[0.18em] mb-2"
+            className="text-base md:text-lg tracking-[0.06em] mb-2"
             style={{ color: c.textSecond, fontWeight: 500 }}>
-            紫微为门 · 天地人为路 · 倪海厦为师
+            <Bi block vi="Tử Vi làm cửa · Thiên Địa Nhân làm đường · Nghê Hải Hạ làm thầy" zh="紫微为门 · 天地人为路 · 倪海厦为师" />
           </motion.p>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.55 }}
-            className="text-xs md:text-sm tracking-[0.3em] mb-6"
+            className="text-xs md:text-sm tracking-[0.12em] mb-6"
             style={{ color: c.textMuted, opacity: 0.85 }}>
-            AI 答疑 · 知行合一
+            <Bi vi="AI giải đáp · Tri hành hợp nhất" zh="AI 答疑 · 知行合一" />
           </motion.p>
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.65 }}
             className="text-sm max-w-xl mx-auto leading-relaxed mb-10"
             style={{ color: c.textMuted }}>
-            输入出生年月日时，生成专属紫微斗数命盘 — 后续天纪、地纪、人纪学习模块陆续开放。
+            <Bi block vi="Nhập năm, tháng, ngày, giờ sinh để lập lá số Tử Vi Đẩu Số riêng của bạn. Các phần học Thiên Kỷ, Địa Kỷ, Nhân Kỷ sẽ lần lượt mở sau." zh="输入出生年月日时，生成专属紫微斗数命盘 — 后续天纪、地纪、人纪学习模块陆续开放。" />
           </motion.p>
 
           {/* CTA */}
@@ -563,21 +581,21 @@ export default function HomePage() {
               onClick={() => router.push('/chart')}
               className="px-12 py-4 font-semibold text-base tracking-widest rounded-full"
               style={{ background: c.ctaBg, color: c.ctaText }}>
-              立即起盘
+              <Bi vi="Lập lá số ngay" zh="立即起盘" />
             </motion.button>
           </motion.div>
 
           {/* 十四主星 */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ delay: 1.05, duration: 0.8 }}
-            className="mt-12 grid grid-cols-7 gap-1.5 max-w-[540px] mx-auto">
+            className="mt-12 flex flex-wrap justify-center gap-1.5 max-w-[720px] mx-auto">
             {STARS.map((star, i) => (
               <motion.div key={star.name}
                 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1.05 + i * 0.03, duration: 0.35 }}
                 className="flex items-center justify-center px-2 py-1 rounded-full"
                 style={{ background: c.starBg, border: `1px solid ${c.starBorder}` }}>
-                <span className="text-[11px] tracking-wide" style={{ color: c.starText }}>{star.name}</span>
+                <span className="text-[11px] tracking-wide whitespace-nowrap" style={{ color: c.starText }}><HV zh={star.name} /></span>
               </motion.div>
             ))}
           </motion.div>
@@ -605,12 +623,11 @@ export default function HomePage() {
           }}>
             <div style={{ fontSize: '20px', marginBottom: '6px', lineHeight: 1 }}>🎁</div>
             <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#8b3a1a', fontWeight: 500 }}>
-              <span style={{ color: '#c45a2d', fontWeight: 700, fontSize: '14px' }}>5/1 — 5/8</span>
-              <span> 限时回馈</span>
+              <span style={{ color: '#c45a2d', fontWeight: 700, fontSize: '14px' }}>1/5 — 8/5</span>
+              <span> <Bi vi="Tri ân có hạn" zh="限时回馈" /></span>
             </div>
             <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#8b3a1a', fontWeight: 500 }}>
-              全部功能 + AI 提问
-              <strong style={{ color: '#c45a2d' }}> 全免费</strong>
+              <Bi block vi="Toàn bộ tính năng + hỏi AI đều miễn phí" zh="全部功能 + AI 提问 全免费" />
             </div>
           </div>
         </motion.div>
@@ -636,11 +653,11 @@ export default function HomePage() {
           }}>
             <div style={{ fontSize: '18px', marginBottom: '4px', lineHeight: 1 }}>🎁</div>
             <div style={{ fontSize: '12px', lineHeight: 1.7, color: '#8b3a1a', fontWeight: 500 }}>
-              <span style={{ color: '#c45a2d', fontWeight: 700, fontSize: '13px' }}>5/1 — 5/8</span>
-              <span> 限时回馈</span>
+              <span style={{ color: '#c45a2d', fontWeight: 700, fontSize: '13px' }}>1/5 — 8/5</span>
+              <span> <Bi vi="Tri ân có hạn" zh="限时回馈" /></span>
             </div>
             <div style={{ fontSize: '12px', lineHeight: 1.7, color: '#8b3a1a', fontWeight: 500 }}>
-              全部功能 + AI <strong style={{ color: '#c45a2d' }}>全免费</strong>
+              <Bi block vi="Toàn bộ tính năng + AI đều miễn phí" zh="全部功能 + AI 全免费" />
             </div>
           </div>
         </motion.div>
@@ -649,7 +666,7 @@ export default function HomePage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 1 }}
           className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none">
-          <span className="text-[9px] tracking-[0.4em] uppercase" style={{ color: c.scrollText }}>探索更多</span>
+          <span className="text-[9px] tracking-[0.4em] uppercase" style={{ color: c.scrollText }}><Bi vi="Khám phá thêm" zh="探索更多" /></span>
           <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
             className="w-px h-8" style={{ background: `linear-gradient(to bottom, ${c.scrollLine}, transparent)` }} />
         </motion.div>
@@ -671,20 +688,20 @@ export default function HomePage() {
         <FadeIn className="relative mx-auto text-center w-full" y={20}>
           <div className="flex items-center justify-center gap-4 mb-8">
             <div className="h-px w-16" style={{ background: 'linear-gradient(to right, transparent, rgba(212,168,67,0.45))' }} />
-            <span className="text-[10px] tracking-[0.55em] uppercase" style={{ color: 'rgba(212,168,67,0.5)' }}>命 · 运 · 观</span>
+            <span className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(212,168,67,0.5)' }}><Bi vi="Mệnh · Vận · Quan" zh="命 · 运 · 观" /></span>
             <div className="h-px w-16" style={{ background: 'linear-gradient(to left, transparent, rgba(212,168,67,0.45))' }} />
           </div>
           <div className="space-y-3" style={{ maxWidth: '840px', margin: '0 auto' }}>
             {[
-              { text: '提前窥探命运的意义', size: 'clamp(17px, 2.2vw, 28px)', color: 'rgba(215,228,252,0.72)', delay: 0.1 },
-              { text: '不在于预知未来', size: 'clamp(21px, 2.6vw, 32px)', color: 'rgba(220,232,250,0.74)', delay: 0.25 },
-              { text: '而在于不断认识自己', size: 'clamp(24px, 3vw, 40px)', color: 'rgba(218,230,248,0.8)', delay: 0.34 },
+              { vi: 'Ý nghĩa của việc sớm nhìn trộm vận mệnh', text: '提前窥探命运的意义', size: 'clamp(17px, 2.2vw, 28px)', color: 'rgba(215,228,252,0.72)', delay: 0.1 },
+              { vi: 'không nằm ở chỗ biết trước tương lai', text: '不在于预知未来', size: 'clamp(21px, 2.6vw, 32px)', color: 'rgba(220,232,250,0.74)', delay: 0.25 },
+              { vi: 'mà ở chỗ không ngừng nhận ra chính mình', text: '而在于不断认识自己', size: 'clamp(24px, 3vw, 40px)', color: 'rgba(218,230,248,0.8)', delay: 0.34 },
             ].map((line, i) => (
               <motion.p key={i}
                 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: line.delay }}
                 className="tracking-wider" style={{ fontSize: line.size, color: line.color, fontWeight: 400 }}>
-                {line.text}
+                <Bi block vi={line.vi} zh={line.text} />
               </motion.p>
             ))}
             <motion.p
@@ -692,7 +709,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.45 }}
               className={`grad-text ${theme === 'dark' ? 'grad-text-dark' : 'grad-text-light'} font-bold`}
               style={{ fontSize: 'clamp(24px, 3.4vw, 48px)', letterSpacing: '0.05em', lineHeight: 1.35 }}>
-              最终书写属于自己的人生剧本
+              <Bi block vi="để rồi viết nên kịch bản đời người của riêng mình" zh="最终书写属于自己的人生剧本" />
             </motion.p>
           </div>
         </FadeIn>
@@ -711,11 +728,11 @@ export default function HomePage() {
             <span className="text-[10px] tracking-[0.4em] uppercase" style={{ color: c.goldSolid, opacity: 0.7 }}>Curriculum</span>
             <div className="h-px w-12" style={{ background: `linear-gradient(to left, transparent, ${c.goldLine})` }} />
           </div>
-          <div className="text-2xl lg:text-3xl font-bold mb-2 tracking-[0.15em]" style={{ color: c.textPrimary }}>
-            倪师方法论 · 渐次展开
+          <div className="text-2xl lg:text-3xl font-bold mb-2 tracking-[0.05em]" style={{ color: c.textPrimary }}>
+            <Bi block vi="Phương pháp luận của Nghê sư · Từng bước mở ra" zh="倪师方法论 · 渐次展开" />
           </div>
           <div className="text-xs lg:text-sm tracking-[0.1em]" style={{ color: c.textMuted }}>
-            从紫微入门，逐步开放天纪 / 地纪 / 人纪学习模块
+            <Bi block vi="Nhập môn từ Tử Vi, dần mở các phần học Thiên Kỷ / Địa Kỷ / Nhân Kỷ" zh="从紫微入门，逐步开放天纪 / 地纪 / 人纪学习模块" />
           </div>
         </FadeIn>
 
@@ -767,11 +784,11 @@ export default function HomePage() {
                     <div className="flex items-baseline gap-2 lg:flex-col lg:gap-0 lg:mb-1">
                       <div className="text-[10px] tracking-[0.25em] lg:mb-1.5"
                         style={{ color: ready ? '#10b981' : c.textMuted, fontWeight: 500 }}>
-                        {s.when}
+                        <T zh={s.when} />
                       </div>
                       <div className="text-base lg:text-xl font-semibold tracking-[0.15em]"
                         style={{ color: c.textPrimary }}>
-                        {s.name}
+                        <T zh={s.name} />
                       </div>
                       {s.note && (
                         <div className="text-[9px] tracking-[0.15em] px-2 py-0.5 rounded-full lg:hidden"
@@ -781,7 +798,7 @@ export default function HomePage() {
                             border: `1px solid ${c.goldLine}`,
                             opacity: 0.85,
                           }}>
-                          {s.note}
+                          <T zh={s.note} />
                         </div>
                       )}
                     </div>
@@ -794,13 +811,13 @@ export default function HomePage() {
                           border: `1px solid ${c.goldLine}`,
                           opacity: 0.85,
                         }}>
-                        {s.note}
+                        <T zh={s.note} />
                       </div>
                     )}
                     {/* 简介 */}
                     <div className="text-[11px] lg:text-xs leading-relaxed lg:max-w-[200px] mt-0.5 lg:mt-0"
                       style={{ color: c.textSecond }}>
-                      {s.desc}
+                      <T block zh={s.desc} />
                     </div>
                   </div>
                 </motion.div>
@@ -823,7 +840,7 @@ export default function HomePage() {
                   <FadeIn delay={0}>
                     <div className="flex items-center gap-3 mb-6">
                       <div className="h-px w-8" style={{ background: c.goldLine }} />
-                      <span className="text-[10px] tracking-[0.5em] uppercase" style={{ color: c.tagText }}>{feature.tag}</span>
+                      <span className="text-[10px] tracking-[0.5em] uppercase" style={{ color: c.tagText }}><T zh={feature.tag} /></span>
                     </div>
                   </FadeIn>
                   <FadeIn delay={0.1}>
@@ -832,18 +849,19 @@ export default function HomePage() {
                         fontSize: i < 2 ? 'clamp(36px, 4vw, 56px)' : 'clamp(30px, 3.5vw, 48px)',
                         whiteSpace: 'pre-line',
                       }}>
-                      {feature.title}
+                      <span className="block">{HOME_VI[feature.title] ?? feature.title}</span>
+                      <span className="block bi-zh mt-2" lang="zh-CN">{feature.title}</span>
                     </h2>
                   </FadeIn>
                   <FadeIn delay={0.2}>
-                    <p className="text-base mb-8 leading-relaxed" style={{ color: c.textSecond }}>{feature.subtitle}</p>
+                    <p className="text-base mb-8 leading-relaxed" style={{ color: c.textSecond }}><T block zh={feature.subtitle} /></p>
                   </FadeIn>
                   <div className="space-y-4">
                     {feature.points.map((point, j) => (
                       <FadeIn key={j} delay={0.25 + j * 0.08}>
                         <div className="flex gap-3">
                           <div className="flex-shrink-0 mt-2 w-1 h-1 rounded-full" style={{ background: c.goldSolid, opacity: 0.6 }} />
-                          <p className="text-sm leading-relaxed" style={{ color: c.textMuted }}>{point}</p>
+                          <p className="text-sm leading-relaxed" style={{ color: c.textMuted }}><T block zh={point} /></p>
                         </div>
                       </FadeIn>
                     ))}
@@ -883,11 +901,10 @@ export default function HomePage() {
               </div>
               <h2 className={`grad-text ${theme === 'dark' ? 'grad-text-dark' : 'grad-text-light'} font-bold mb-5 tracking-tight`}
                 style={{ fontSize: 'clamp(32px, 4vw, 48px)' }}>
-                天 · 地 · 人
+                <Bi block vi="Thiên · Địa · Nhân" zh="天 · 地 · 人" />
               </h2>
               <p className="max-w-2xl mx-auto text-sm leading-relaxed" style={{ color: c.textSecond }}>
-                倪海厦老师的核心命运观：命运从来不是人生的全部。<br />
-                他将影响人生的力量分为三个同等重要的维度。
+                <Bi block vi="Quan niệm cốt lõi về vận mệnh của Nghê Hải Hạ lão sư: vận mệnh chưa bao giờ là toàn bộ đời người. Ông chia các sức mạnh ảnh hưởng đến đời người thành ba chiều quan trọng như nhau." zh="倪海厦老师的核心命运观：命运从来不是人生的全部。他将影响人生的力量分为三个同等重要的维度。" />
               </p>
             </div>
           </FadeIn>
@@ -909,11 +926,11 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="mb-3">
-                    <div className="text-sm font-medium mb-0.5" style={{ color: item.color }}>{item.label}</div>
-                    <div className="text-[10px] tracking-wider" style={{ color: c.textMuted }}>{item.sub}</div>
+                    <div className="text-sm font-medium mb-0.5" style={{ color: item.color }}><T zh={item.label} /></div>
+                    <div className="text-[10px] tracking-wider" style={{ color: c.textMuted }}><T zh={item.sub} /></div>
                   </div>
                   <div className="h-px mb-4" style={{ background: item.borderColor }} />
-                  <p className="text-xs leading-relaxed flex-1" style={{ color: c.textSecond }}>{item.desc}</p>
+                  <p className="text-xs leading-relaxed flex-1" style={{ color: c.textSecond }}><T block zh={item.desc} /></p>
                 </motion.div>
               </FadeIn>
             ))}
@@ -921,9 +938,9 @@ export default function HomePage() {
           <FadeIn delay={0.3}>
             <div className="mt-10 text-center">
               <p className="text-sm leading-relaxed" style={{ color: c.textSecond }}>
-                「命运不是人生的全部，加上地理位置和人念，才是。」
+                <Bi block vi="«Vận mệnh không phải là toàn bộ đời người; cộng thêm vị trí địa lý và nhân niệm, mới là.»" zh="「命运不是人生的全部，加上地理位置和人念，才是。」" />
               </p>
-              <p className="mt-2 text-[10px] tracking-widest" style={{ color: c.tagText }}>— 倪海厦</p>
+              <p className="mt-2 text-[10px] tracking-widest" style={{ color: c.tagText }}>— <Bi vi="Nghê Hải Hạ" zh="倪海厦" /></p>
             </div>
           </FadeIn>
         </div>
@@ -942,11 +959,10 @@ export default function HomePage() {
               </div>
               <h2 className={`grad-text ${theme === 'dark' ? 'grad-text-dark' : 'grad-text-light'} font-bold mb-6 tracking-tight`}
                 style={{ fontSize: 'clamp(32px, 4vw, 48px)' }}>
-                倪海厦老师
+                <Bi block vi="Nghê Hải Hạ lão sư" zh="倪海厦老师" />
               </h2>
               <p className="max-w-2xl mx-auto leading-relaxed text-sm" style={{ color: c.textSecond }}>
-                当代华人圈最具影响力的中医与术数大家之一<br />
-                美国汉唐中医学院创办人 ·「人纪」「天纪」两大教学体系传世
+                <Bi block vi="Một trong những đại gia Trung y và thuật số có ảnh hưởng nhất giới Hoa nhân đương đại · Người sáng lập Học viện Trung y Hán Đường tại Mỹ, để lại hai hệ thống giảng dạy «Nhân Kỷ» và «Thiên Kỷ»" zh="当代华人圈最具影响力的中医与术数大家之一 · 美国汉唐中医学院创办人 ·「人纪」「天纪」两大教学体系传世" />
               </p>
             </div>
           </FadeIn>
@@ -962,21 +978,27 @@ export default function HomePage() {
                 ].map(item => (
                   <div key={item.label} className="text-center rounded-xl px-4 py-3"
                     style={{ border: `1px solid ${c.niDivider}`, background: 'rgba(255,255,255,0.02)' }}>
-                    <div className="text-[10px] tracking-[0.3em] mb-1" style={{ color: c.textFaint }}>{item.label}</div>
-                    <div className="text-2xl font-semibold mb-0.5" style={{ color: c.goldSolid }}>{item.value}</div>
-                    <div className="text-[11px]" style={{ color: c.textMuted }}>{item.sub}</div>
+                    <div className="text-[10px] tracking-[0.3em] mb-1" style={{ color: c.textFaint }}><T zh={item.label} /></div>
+                    <div className="text-2xl font-semibold mb-0.5" style={{ color: c.goldSolid }}><T zh={item.value} /></div>
+                    <div className="text-[11px]" style={{ color: c.textMuted }}><T zh={item.sub} /></div>
                   </div>
                 ))}
               </div>
               <div className="h-px mb-8" style={{ background: c.niDivider }} />
               <div className="space-y-4 text-sm leading-relaxed max-w-3xl mx-auto" style={{ color: c.textSecond }}>
                 <p>
+                  <strong style={{ color: c.goldSolid }}>Tiểu sử</strong>: Ông Nghê Hải Hạ (1954–2012) sinh tại Đài Loan, thuở trẻ theo học nhiều danh y Trung y, chuyên nghiên phái Kinh phương (truyền thừa 《Thương Hàn Luận》). Trung niên sang Mỹ hành y, sáng lập <strong>Học viện Trung y Hán Đường</strong> tại Mỹ, hơn hai mươi năm truyền dạy có hệ thống Trung y và thuật số truyền thống. Ngày 31/1/2012 ông qua đời tại Đài Loan vì ung thư gan, hưởng thọ 58 tuổi.
+                </p>
+                <p className="bi-zh" lang="zh-CN">
                   <strong style={{ color: c.goldSolid }}>生平履历</strong>：
                   倪海厦先生（1954–2012）出生于台湾，早年师承多位中医名家，专研经方派（《伤寒论》传承）。
                   中年赴美行医，在美国创立<strong>汉唐中医学院</strong>，二十余年间系统传授中医与传统术数。
                   2012 年 1 月 31 日因肝癌在台湾离世，享年 58 岁。
                 </p>
                 <p>
+                  <strong style={{ color: c.goldSolid }}>Hệ thống giảng dạy</strong>: Nghê sư chỉnh lý sở học cả đời thành hai loạt bài giảng công khai. <strong>«Nhân Kỷ»</strong> gồm 《Châm Cứu Đại Thành》《Thần Nông Bản Thảo Kinh》《Hoàng Đế Nội Kinh》《Thương Hàn Luận》《Kim Quỹ Yếu Lược》, đây là "kỷ của con người", đặt nền con đường học Trung y trọn vẹn; <strong>«Thiên Kỷ»</strong> gồm Tử Vi Đẩu Số và 《Kinh Dịch》, đây là "kỷ của trời", là thành quả hệ thống hóa việc nghiên cứu thuật số. Hai phần hợp lại là sự truyền thừa trọn vẹn nhất Nghê sư để lại cho đời sau.
+                </p>
+                <p className="bi-zh" lang="zh-CN">
                   <strong style={{ color: c.goldSolid }}>教学体系</strong>：
                   倪师将毕生所学整理为两大公开教学系列。
                   <strong>「人纪」</strong>涵盖《针灸大成》《神农本草经》《黄帝内经》《伤寒论》《金匮要略》——
@@ -985,22 +1007,34 @@ export default function HomePage() {
                   两者相合，是倪师留给后世最完整的传承。
                 </p>
                 <p>
+                  <strong style={{ color: c.goldSolid }}>Lập trường Tử Vi</strong>: Về Tử Vi Đẩu Số, Nghê sư rõ ràng thuộc <strong>Nam phái Tam Hợp</strong>, chủ trương "lấy cung Mệnh làm gốc, lấy Tam phương Tứ chính làm dụng, lấy Tứ Hóa làm cương". Trong khóa 《Thiên Kỷ》 ông nói rõ: «<em>phi tinh (Tứ Hóa) bay qua bay lại quá phức tạp, không theo lối đó, rốt cuộc đại đạo chí giản</em>», lập trường này phân biệt rõ ông với phái Phi Tinh rườm rà.
+                </p>
+                <p className="bi-zh" lang="zh-CN">
                   <strong style={{ color: c.goldSolid }}>紫微立场</strong>：
                   倪师在紫微斗数上明确属<strong>南派三合派</strong>，主张「以命宫为本、以三方四正为用、以四化为纲」。
                   他在《天纪》课程中明言：「<em>飞星（四化）飞来飞去太复杂，不搞这个，毕竟大道至简</em>」——
                   这一立场将其与繁琐的飞星派清晰区分。
                 </p>
                 <p>
+                  <strong style={{ color: c.goldSolid }}>Thái độ học thuật</strong>: Nghê sư phản đối học thuộc lòng khẩu quyết, nhấn mạnh "hiểu nguyên lý hơn học thuộc", "logic kiểm chứng được hơn huyền học thần bí". Thái độ này đưa Tử Vi Đẩu Số từ một hệ thống khép kín thầy truyền trò bí mật thành một hệ thống tri thức hiện đại, có hệ thống, kiểm chứng được và học được.
+                </p>
+                <p className="bi-zh" lang="zh-CN">
                   <strong style={{ color: c.goldSolid }}>治学态度</strong>：
                   倪师反对死记硬背口诀，强调「理解原理胜过背诵」「逻辑可复核胜过神秘玄学」。
                   这种态度让紫微斗数从师徒密传的封闭体系，走向系统化、可验证、可学习的现代知识体系。
                 </p>
                 <p>
+                  <strong style={{ color: c.goldSolid }}>Ảnh hưởng đương đại</strong>: Video bài giảng của Nghê sư lan truyền rộng rãi trên Bilibili, YouTube và các nền tảng lớn, được thế hệ mới yêu thích mệnh lý và Trung y công nhận là bài nhập môn bắt buộc. Ông không chỉ là người truyền thừa Tử Vi Đẩu Số mà còn là một trong những nhân vật then chốt đưa mệnh lý truyền thống và Trung y vào hệ thống tri thức hiện đại.
+                </p>
+                <p className="bi-zh" lang="zh-CN">
                   <strong style={{ color: c.goldSolid }}>当代影响</strong>：
                   倪师的讲课视频在 B 站、YouTube 与各大平台广泛流传，是新一代命理与中医爱好者公认的入门必修。
                   他不仅是紫微斗数的传承者，更是把传统命理与中医带入现代知识体系的关键人物之一。
                 </p>
                 <p style={{ fontSize: '11px', color: c.textMuted, fontStyle: 'italic', marginTop: '12px' }}>
+                  Mọi luận giải trên nền tảng này được chỉnh lý từ giáo trình giảng dạy công khai 《Thiên Kỷ》 của Nghê sư, bản 《Tử Vi Đẩu Số Toàn Thư》 đời Minh và cổ thư phái Tam Hợp truyền thống, chỉ để tham khảo về văn hóa và phát triển cá nhân. Bản thân Nghê sư không có bất kỳ liên hệ thương mại nào với nền tảng này.
+                </p>
+                <p className="bi-zh" lang="zh-CN" style={{ fontSize: '11px', color: c.textMuted, fontStyle: 'italic' }}>
                   本平台所有解读基于倪师《天纪》公开教学讲义、《紫微斗数全书》明版、传统三合派古籍整理而成，
                   仅作文化与个人成长参考。倪师本人与本平台无任何商业关联。
                 </p>
@@ -1019,9 +1053,9 @@ export default function HomePage() {
                       style={{ borderColor: c.goldLine }}>
                       <span className="text-[9px]" style={{ color: c.goldSolid }}>{i + 1}</span>
                     </div>
-                    <h3 className="text-sm font-medium leading-relaxed" style={{ color: c.goldSolid }}>{teaching.title}</h3>
+                    <h3 className="text-sm font-medium leading-relaxed" style={{ color: c.goldSolid }}><T zh={teaching.title} /></h3>
                   </div>
-                  <p className="text-xs leading-relaxed pl-8" style={{ color: c.textSecond }}>{teaching.body}</p>
+                  <p className="text-xs leading-relaxed pl-8" style={{ color: c.textSecond }}><T block zh={teaching.body} /></p>
                 </motion.div>
               </FadeIn>
             ))}
@@ -1046,11 +1080,10 @@ export default function HomePage() {
               </div>
               <h2 className={`grad-text ${theme === 'dark' ? 'grad-text-dark' : 'grad-text-light'} font-bold mb-4 tracking-tight`}
                 style={{ fontSize: 'clamp(26px, 3.5vw, 40px)' }}>
-                紫微合盘
+                <Bi block vi="Hợp lá số Tử Vi" zh="紫微合盘" />
               </h2>
               <p className="text-sm leading-relaxed mb-8 max-w-lg mx-auto" style={{ color: c.textSecond }}>
-                输入两个人的出生信息，AI 基于倪海厦体系分析夫妻宫互参、命宫兼容性与三方四正交互，<br className="hidden md:block" />
-                给出感情匹配度、合伙可行性与最佳相处建议。
+                <Bi block vi="Nhập thông tin sinh của hai người, AI dựa trên thể hệ Nghê Hải Hạ phân tích tham chiếu cung Phu Thê, độ tương hợp cung Mệnh và giao thoa Tam phương Tứ chính, đưa ra mức hợp tình cảm, khả năng hợp tác và lời khuyên chung sống tốt nhất." zh="输入两个人的出生信息，AI 基于倪海厦体系分析夫妻宫互参、命宫兼容性与三方四正交互，给出感情匹配度、合伙可行性与最佳相处建议。" />
               </p>
               <div className="flex justify-center gap-3 flex-wrap mb-6">
                 {['感情匹配度分析', '合伙创业评估', '亲子缘分解读', '婚前相性评估'].map(item => (
@@ -1060,7 +1093,7 @@ export default function HomePage() {
                     border: `1px solid ${c.goldLine}`,
                     color: c.goldSolid,
                   }}>
-                    {item}
+                    <T zh={item} />
                   </span>
                 ))}
               </div>
@@ -1074,7 +1107,7 @@ export default function HomePage() {
                   color: c.goldSolid,
                   cursor: 'pointer',
                 }}>
-                开始合盘分析
+                <Bi vi="Bắt đầu phân tích hợp lá số" zh="开始合盘分析" />
               </motion.button>
             </FadeIn>
           </div>
@@ -1084,21 +1117,21 @@ export default function HomePage() {
       {/* ══ 最终 CTA ══════════════════════════════════════ */}
       <section className="relative z-10 py-40 px-6 text-center" style={{ background: c.altSection }}>
         <FadeIn>
-          <p className="text-[10px] tracking-[0.6em] uppercase mb-6" style={{ color: c.tagText }}>开始你的命盘之旅</p>
+          <p className="text-[10px] tracking-[0.6em] uppercase mb-6" style={{ color: c.tagText }}><Bi vi="Bắt đầu hành trình lá số của bạn" zh="开始你的命盘之旅" /></p>
           <h2 className={`grad-text ${theme === 'dark' ? 'grad-text-dark' : 'grad-text-light'} font-bold mb-8 tracking-tight leading-tight`}
             style={{ fontSize: 'clamp(32px, 5vw, 60px)' }}>
-            你的紫微命盘<br />等你解读
+            Lá số Tử Vi của bạn<br />đang chờ được luận giải
+            <span className="block bi-zh mt-3" lang="zh-CN">你的紫微命盘，等你解读</span>
           </h2>
           <p className="text-sm mb-10 max-w-md mx-auto leading-relaxed" style={{ color: c.textSecond }}>
-            输入出生年月日时，在几秒内生成你的专属命盘<br />
-            再由 AI 按倪海厦体系为你深度解读
+            <Bi block vi="Nhập năm, tháng, ngày, giờ sinh, vài giây là có lá số riêng của bạn, rồi AI luận giải chuyên sâu theo thể hệ Nghê Hải Hạ" zh="输入出生年月日时，在几秒内生成你的专属命盘，再由 AI 按倪海厦体系为你深度解读" />
           </p>
           <motion.button
             whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
             onClick={() => router.push('/chart')}
             className="px-14 py-4 font-semibold text-base tracking-widest rounded-full"
             style={{ background: c.ctaBg, color: c.ctaText }}>
-            免费起盘
+            <Bi vi="Lập lá số miễn phí" zh="免费起盘" />
           </motion.button>
           <div className="mt-4 flex flex-wrap gap-3 justify-center">
             <motion.a
@@ -1111,7 +1144,7 @@ export default function HomePage() {
                 background: 'transparent',
                 textDecoration: 'none',
               }}>
-              ✦ 紫微斗数知识库 →
+              ✦ <Bi vi="Kho tri thức Tử Vi Đẩu Số" zh="紫微斗数知识库" /> →
             </motion.a>
             <motion.a
               href="/library"
@@ -1123,7 +1156,7 @@ export default function HomePage() {
                 background: 'transparent',
                 textDecoration: 'none',
               }}>
-              📜 古籍原典库 →
+              📜 <Bi vi="Kho cổ thư nguyên điển" zh="古籍原典库" /> →
             </motion.a>
           </div>
         </FadeIn>
@@ -1137,7 +1170,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto mb-8">
           <div className="text-[9px] tracking-[0.3em] text-center mb-4 uppercase"
             style={{ color: c.textMuted, opacity: 0.6 }}>
-            倪师方法论 · 学术体系
+            <Bi vi="Phương pháp luận Nghê sư · Hệ thống học thuật" zh="倪师方法论 · 学术体系" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {SECTIONS.map(s => {
@@ -1158,11 +1191,11 @@ export default function HomePage() {
                 >
                   <div className="text-base font-semibold mb-0.5 tracking-[0.1em]"
                     style={{ color: ready ? c.goldSolid : c.textMuted }}>
-                    {s.name}
+                    <T zh={s.name} />
                   </div>
                   <div className="text-[9px] tracking-wider"
                     style={{ color: ready ? '#10b981' : c.textMuted }}>
-                    {ready ? '✓ 已上线' : `${s.when} 开放`}
+                    {ready ? <>✓ <Bi vi="Đã ra mắt" zh="已上线" /></> : <Bi vi={`Mở ${(HOME_VI[s.when] ?? s.when).toLowerCase()}`} zh={`${s.when} 开放`} />}
                   </div>
                 </a>
               );
@@ -1172,17 +1205,16 @@ export default function HomePage() {
 
         <div className="text-center">
           <p className="text-[10px] tracking-wider mb-3" style={{ color: c.footerText }}>
-            紫微命盘 · 基于倪海厦正宗体系 · 仅供参考，命运掌握在自己手中
+            <Bi block vi="Lá số Tử Vi · Dựa trên thể hệ chính tông Nghê Hải Hạ · Chỉ để tham khảo, vận mệnh nằm trong tay bạn" zh="紫微命盘 · 基于倪海厦正宗体系 · 仅供参考，命运掌握在自己手中" />
           </p>
           <p className="text-[10px] tracking-wider mb-3 max-w-2xl mx-auto leading-relaxed"
             style={{ color: c.footerText, opacity: 0.85 }}>
-            本平台基于中国传统文化研究，仅提供学习参考。<br className="sm:hidden" />
-            不构成任何医疗、投资、法律或重大决策建议。
+            <Bi block vi="Nền tảng này dựa trên nghiên cứu văn hóa truyền thống Trung Hoa, chỉ cung cấp tham khảo học tập, không cấu thành bất kỳ lời khuyên nào về y tế, đầu tư, pháp luật hay quyết định trọng đại." zh="本平台基于中国传统文化研究，仅提供学习参考。不构成任何医疗、投资、法律或重大决策建议。" />
           </p>
           <p className="text-[10px] tracking-wider" style={{ color: c.footerText }}>
-            <a href="/terms" style={{ color: c.footerText, textDecoration: 'underline' }}>服务条款</a>
+            <a href="/terms" style={{ color: c.footerText, textDecoration: 'underline' }}><Bi vi="Điều khoản dịch vụ" zh="服务条款" /></a>
             {' · '}
-            <a href="/privacy" style={{ color: c.footerText, textDecoration: 'underline' }}>隐私政策</a>
+            <a href="/privacy" style={{ color: c.footerText, textDecoration: 'underline' }}><Bi vi="Chính sách quyền riêng tư" zh="隐私政策" /></a>
           </p>
         </div>
       </footer>
