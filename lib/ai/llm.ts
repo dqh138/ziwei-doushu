@@ -6,8 +6,8 @@
  *   ANTHROPIC_API_KEY   khóa API Claude (bắt đầu bằng sk-ant-…)            — bắt buộc khi dùng Claude
  *   AI_PROVIDER         'anthropic' (mặc định) | 'deepseek'
  *   AI_MODEL            mặc định 'claude-sonnet-5-5'; có thể đổi 'claude-haiku-5-5' cho rẻ
- *   AI_MAX_TOKENS       mặc định 6000
- *   AI_THINKING         'off' (mặc định, trả chữ ngay) | 'on' (cho mô hình tự suy nghĩ — chậm hơn, tốn token hơn)
+ *   AI_MAX_TOKENS       mặc định 16000 (gồm cả phần mô hình "nghĩ"; chỉ tính tiền phần thực dùng)
+ *   AI_EFFORT           'low' (mặc định, nhanh) | 'medium' | 'high' | 'default' (không gửi tham số)
  *   DEEPSEEK_API_KEY    khi AI_PROVIDER=deepseek; model mặc định 'deepseek-flash'
  */
 import Anthropic from '@anthropic-ai/sdk';
@@ -29,7 +29,7 @@ export class EmptyCompletionError extends Error {
 const provider = () => (process.env.AI_PROVIDER || 'anthropic').toLowerCase();
 const maxTokens = () => {
   const n = parseInt(process.env.AI_MAX_TOKENS || '', 10);
-  return Number.isFinite(n) && n > 0 ? Math.min(n, 16000) : 6000;
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 32000) : 16000;
 };
 
 /** Đọc khóa từ biến môi trường, bỏ khoảng trắng/xuống dòng/dấu nháy lỡ dán kèm (gây lỗi header → "Connection error"). */
@@ -54,15 +54,16 @@ export async function* streamCompletion(system: string, messages: ChatMessage[],
     console.warn('[ai] ANTHROPIC_API_KEY không có dạng khóa API (sk-ant-api…); Anthropic có thể từ chối.');
   }
   const client = new Anthropic({ apiKey, maxRetries: 1 });
-  // Mô hình đời mới có thể tự "nghĩ" trước khi viết; khi đó toàn bộ max_tokens có thể bị tiêu vào phần nghĩ
-  // và không còn chữ nào cho người dùng. Mặc định tắt để chữ ra ngay.
-  const thinkingOff = (process.env.AI_THINKING || 'off').toLowerCase() !== 'on';
+  // Sonnet 5.5 luôn "nghĩ" trước khi viết (không tắt được) và phần nghĩ tính vào max_tokens.
+  // Với lá số dài, nghĩ có thể tiêu hết ngân sách → không còn chữ. Vì vậy: hạ effort để nghĩ ngắn,
+  // và để max_tokens rộng (mặc định 16000) cho đủ chỗ cả phần nghĩ lẫn bài luận.
+  const effort = (process.env.AI_EFFORT || 'low').toLowerCase() as 'low' | 'medium' | 'high';
   const params = {
     model: process.env.AI_MODEL || 'claude-sonnet-5-5',
     max_tokens: maxTokens(),
     system,
     messages,
-    ...(thinkingOff ? { thinking: { type: 'disabled' as const } } : {}),
+    ...(effort !== ('default' as string) ? { output_config: { effort } } : {}),
   };
 
   let produced = 0;
@@ -81,10 +82,10 @@ export async function* streamCompletion(system: string, messages: ChatMessage[],
   try {
     final = yield* run(params);
   } catch (e) {
-    // Mô hình không nhận tham số thinking → thử lại một lần không kèm tham số đó
-    if (thinkingOff && !produced && e instanceof Anthropic.BadRequestError && /thinking/i.test(e.message)) {
-      console.warn('[ai] model rejected thinking=disabled, retrying without it');
-      const { thinking: _omit, ...rest } = params as typeof params & { thinking?: unknown };
+    // Mô hình không nhận tham số effort → thử lại một lần không kèm tham số đó
+    if (!produced && e instanceof Anthropic.BadRequestError && /effort|output_config/i.test(e.message)) {
+      console.warn('[ai] model rejected output_config.effort, retrying without it');
+      const { output_config: _omit, ...rest } = params as typeof params & { output_config?: unknown };
       void _omit;
       final = yield* run(rest as typeof params);
     } else {

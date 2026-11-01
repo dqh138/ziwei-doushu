@@ -27,7 +27,7 @@ export function msgFromError(e: unknown): string {
       return 'Mô hình từ chối trả lời câu hỏi này. Hãy thử đặt câu hỏi khác hoặc chọn chủ đề khác.\n\n模型拒绝回答此问题，请换个问法或主题再试。';
     }
     if (e.stopReason === 'max_tokens') {
-      return 'Mô hình dùng hết giới hạn token trước khi viết xong. Quản trị viên có thể tăng AI_MAX_TOKENS trên Vercel; bạn hãy bấm lại chủ đề.\n\n模型在输出前已用尽 token 上限，请调高 AI_MAX_TOKENS 或重试。';
+      return 'Mô hình nghĩ quá lâu và dùng hết giới hạn token trước khi viết. Hãy bấm lại chủ đề; nếu lặp lại, quản trị viên tăng AI_MAX_TOKENS trên Vercel.\n\n模型在输出前已用尽 token 上限，请调高 AI_MAX_TOKENS 或重试。';
     }
     return 'Mô hình không trả về nội dung (' + (e.stopReason ?? 'không rõ') + '). Vui lòng bấm lại chủ đề.\n\n模型未返回内容，请重试。';
   }
