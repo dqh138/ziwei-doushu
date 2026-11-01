@@ -5,6 +5,8 @@ import { STEMS, BRANCHES } from '@/lib/ziwei/constants';
 import clsx from 'clsx';
 import Bi, { HV, hv } from './Bi';
 import { STEMS_VI, BRANCHES_VI, SIHUA_VI } from '@/lib/ziwei/hanviet';
+import type { StarBrightness } from '@/lib/ziwei/types';
+import { BRIGHTNESS_LEVELS, brightnessTag, type BrightnessDisplay } from '@/lib/ziwei/brightness';
 
 interface PalaceCellProps {
   palace: Palace;
@@ -19,6 +21,27 @@ interface PalaceCellProps {
   overlayLabel?: string;
   /** 点击叠加四化 badge 回调 */
   onSiHuaClick?: (starName: string, siHua: string) => void;
+  /** Kiểu hiện độ sáng: 'detail' = các bậc TQ/ĐL, 'vn' = 5 bậc Việt Nam, 'off' = ẩn */
+  brightnessMode?: BrightnessDisplay | 'off';
+}
+
+/** Nhãn độ sáng cạnh tên sao. full = hiện cả tên Việt (chính tinh); compact = viết tắt + chữ Hán (phụ tinh). */
+function BrightTag({ level, mode, full }: { level?: StarBrightness; mode: BrightnessDisplay | 'off'; full?: boolean }) {
+  if (mode === 'off') return null;
+  const t = brightnessTag(level, mode);
+  if (!t) return null;
+  const def = level ? BRIGHTNESS_LEVELS[level] : undefined;
+  const title = def ? `${def.vi} ${def.zh} (${def.zhFull}) — ${def.descVi}${mode === 'vn' && def.vnNote ? ` ${def.vnNote}` : ''}` : '';
+  return (
+    <span
+      title={title}
+      className={clsx('inline-flex items-center leading-none flex-shrink-0 rounded-sm', full ? 'text-[8px] px-[3px] py-px ml-1 border' : 'text-[7.5px] ml-px')}
+      style={{ color: t.color, borderColor: full ? `${t.color}66` : undefined, background: full ? `${t.color}14` : undefined }}
+    >
+      {full ? t.vi : t.abbr}
+      <span className="bi-zh ml-px" lang="zh-CN">{t.zh}</span>
+    </span>
+  );
 }
 
 const SIHUA_STYLES: Record<string, string> = {
@@ -58,7 +81,7 @@ const SiHuaBadge = ({
 
 export default function PalaceCell({
   palace, onClick, onStarClick, isSelected, isSanFang, delay = 0,
-  overlayStarSiHua, overlayLabel, onSiHuaClick,
+  overlayStarSiHua, overlayLabel, onSiHuaClick, brightnessMode = 'detail',
 }: PalaceCellProps) {
   const { branch, stem, name, stars, daXianAge, isCurrentDaXian, isMingGong, isShenGong } = palace;
   const ganzhi = `${STEMS[stem]}${BRANCHES[branch]}`;
@@ -146,6 +169,7 @@ export default function PalaceCell({
               )}>
                 <HV zh={star.name} />
               </span>
+              <BrightTag level={star.brightnessRaw} mode={brightnessMode} full />
               {star.siHua && <SiHuaBadge siHua={star.siHua} />}
               {overlaySiHua && (
                 <SiHuaBadge
@@ -169,8 +193,10 @@ export default function PalaceCell({
           {luckyStars.map(s => {
             const overlaySiHua = overlayStarSiHua?.[s.name];
             return (
-              <span key={s.name} className="inline-flex items-center text-[9px] text-sky-500/70 leading-tight">
+              <span key={s.name} className="inline-flex items-center text-[9px] text-sky-500/70 leading-tight cursor-pointer"
+                onClick={e => { e.stopPropagation(); onStarClick?.(s); }}>
                 <HV zh={s.name} />
+                <BrightTag level={s.brightnessRaw} mode={brightnessMode} />
                 {s.siHua && <SiHuaBadge siHua={s.siHua} />}
                 {overlaySiHua && (
                   <SiHuaBadge
@@ -193,8 +219,9 @@ export default function PalaceCell({
       {shaStars.length > 0 && (
         <div className="flex flex-wrap gap-x-1">
           {shaStars.map(s => (
-            <span key={s.name} className="text-[9px] text-red-500/60 leading-tight">
-              <HV zh={s.name} />{s.siHua && <SiHuaBadge siHua={s.siHua} />}
+            <span key={s.name} className="inline-flex items-center text-[9px] text-red-500/60 leading-tight cursor-pointer"
+              onClick={e => { e.stopPropagation(); onStarClick?.(s); }}>
+              <HV zh={s.name} /><BrightTag level={s.brightnessRaw} mode={brightnessMode} />{s.siHua && <SiHuaBadge siHua={s.siHua} />}
             </span>
           ))}
         </div>

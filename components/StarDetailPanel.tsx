@@ -5,6 +5,7 @@ import { STAR_DESCRIPTIONS } from '@/lib/ziwei/constants';
 import Bi, { HV, hv } from './Bi';
 import { vt } from '@/lib/ziwei/hanviet';
 import { STAR_DETAILS_VI, MINOR_STAR_NOTES } from './star-detail-vi';
+import { BRIGHTNESS_LEVELS, VN_LEVELS } from '@/lib/ziwei/brightness';
 
 interface StarDetailPanelProps {
   star: Star | null;
@@ -183,7 +184,8 @@ export default function StarDetailPanel({ star, palaceName, onClose }: StarDetai
   const desc = star ? STAR_DESCRIPTIONS[star.name] : null;
   const detail = star ? STAR_DETAIL[star.name] : null;
   const detailVi = star ? STAR_DETAILS_VI[star.name] : null;
-  const brightTag = star?.brightness === 'bright' ? 'bright' : star?.brightness === 'dim' ? 'dim' : star?.brightness ? 'normal' : null;
+  const lvl = star?.brightnessRaw ? BRIGHTNESS_LEVELS[star.brightnessRaw] : undefined;
+  const lvlVn = lvl ? VN_LEVELS[lvl.vn] : undefined;
   const typeConfig = star ? levelConfig[star.type] : null;
 
   return (
@@ -215,6 +217,24 @@ export default function StarDetailPanel({ star, palaceName, onClose }: StarDetai
           </div>
 
           <div className="p-4 space-y-4 overflow-y-auto max-h-[560px]">
+            {/* 亮度 · Độ sáng */}
+            {lvl && lvlVn && (
+              <div className="rounded-lg px-3 py-2.5" style={{ border: `1px solid ${lvl.color}55`, background: `${lvl.color}10` }}>
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
+                  <span className="text-[10px]" style={{ color: 'var(--t-faint)' }}><Bi vi="Độ sáng tại cung này" zh="本宫亮度" /></span>
+                  <span className="text-sm font-bold" style={{ color: lvl.color }}>
+                    <Bi vi={`${lvl.vi} (${lvl.abbr})`} zh={`${lvl.zh} · ${lvl.zhFull}`} />
+                  </span>
+                  <span className="text-[10px]" style={{ color: 'var(--t-faint)' }}>
+                    {lvl.rank}/7 · <Bi vi={`hệ VN: ${lvlVn.vi}`} zh={`越南：${lvlVn.zh}`} />
+                  </span>
+                </div>
+                <div className="text-[11px] leading-relaxed" style={{ color: 'var(--t-text2)' }}>
+                  <Bi block vi={lvl.descVi + (lvl.vnNote ? ` ${lvl.vnNote}` : '')} zh={lvl.descZh} zhClassName="mt-0.5" />
+                </div>
+              </div>
+            )}
+
             {/* 基本信息 */}
             {desc && (
               <div className="flex flex-wrap gap-1.5">
@@ -222,9 +242,6 @@ export default function StarDetailPanel({ star, palaceName, onClose }: StarDetai
                   { key: 'el', vi: `Ngũ hành · ${hv(desc.element)}`, zh: `五行 · ${desc.element}`, color: 'var(--t-text2)' },
                   { key: 'na', vi: `Tính chất · ${vt(desc.nature)}`, zh: `性质 · ${desc.nature}`, color: 'var(--t-text2)' },
                   ...(palaceName ? [{ key: 'po', vi: `Vị trí · ${hv(palaceName)}`, zh: `位置 · ${palaceName}`, color: 'var(--t-text2)' }] : []),
-                  ...(brightTag === 'bright' ? [{ key: 'br', vi: 'Miếu Vượng', zh: '庙旺', color: '#eab308' }]
-                    : brightTag === 'dim' ? [{ key: 'br', vi: 'Lạc Hãm', zh: '落陷', color: '#ef4444' }]
-                    : brightTag === 'normal' ? [{ key: 'br', vi: 'Bình hòa', zh: '平和', color: 'var(--t-text2)' }] : []),
                 ].map(tag => (
                   <div key={tag.key} className="text-[10px] px-2 py-1 rounded-full"
                     style={{ border: '1px solid var(--t-border)', color: tag.color }}>

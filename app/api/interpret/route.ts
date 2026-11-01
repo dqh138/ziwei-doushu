@@ -16,7 +16,7 @@ export const maxDuration = 300;
 async function* once(text: string) { yield text; }
 
 export async function POST(req: Request) {
-  let body: { chart?: { birthInfo?: unknown }; messages?: unknown };
+  let body: { chart?: { birthInfo?: unknown; brightnessSchool?: unknown }; messages?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   if (!aiConfigured()) return sseResponse(once(MSG_NOT_CONFIGURED), msgFromError);
 
-  const chart = rebuildChart(body.chart?.birthInfo);
+  const chart = rebuildChart(body.chart?.birthInfo, body.chart?.brightnessSchool);
   if (!chart) return sseResponse(once(MSG_BAD_CHART), msgFromError);
 
   const messages = sanitizeMessages(body.messages);

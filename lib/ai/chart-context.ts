@@ -5,7 +5,8 @@
  * Server luôn tự lập lại lá số từ ngày giờ sinh (không tin dữ liệu lá số gửi từ trình duyệt),
  * nên mọi tên sao/cung ở đây đều do engine sinh ra.
  */
-import { generateChart } from '@/lib/ziwei/algorithm';
+import { generateChart, setBrightnessSchool } from '@/lib/ziwei/algorithm';
+import { BRIGHTNESS_SCHOOLS, type BrightnessSchoolId } from '@/lib/ziwei/brightness';
 import { STEMS, BRANCHES, SI_HUA_TABLE } from '@/lib/ziwei/constants';
 import { detectPatterns } from '@/lib/ziwei/patterns';
 import { hv } from '@/lib/ziwei/hanviet';
@@ -23,14 +24,24 @@ export function sanitizeBirthInfo(raw: unknown): BirthInfo | null {
   return { year, month, day, hour, gender: b.gender, longitude };
 }
 
-/** Lập lại lá số từ BirthInfo; ngày không tồn tại thì trả null. */
-export function rebuildChart(raw: unknown): ZiweiChart | null {
+const SCHOOL_IDS = BRIGHTNESS_SCHOOLS.map(s => s.id) as readonly string[];
+
+/**
+ * Lập lại lá số từ BirthInfo theo bảng độ sáng người dùng đang xem; ngày không tồn tại thì trả null.
+ * setBrightnessSchool là biến toàn cục của engine, nhưng generateChart chạy đồng bộ nên
+ * đổi → lập → trả về mặc định trong cùng một lượt là an toàn giữa các request.
+ */
+export function rebuildChart(raw: unknown, school?: unknown): ZiweiChart | null {
   const info = sanitizeBirthInfo(raw);
   if (!info) return null;
+  const sc: BrightnessSchoolId = typeof school === 'string' && SCHOOL_IDS.includes(school) ? school as BrightnessSchoolId : 'QS';
+  setBrightnessSchool(sc);
   try {
-    return generateChart(info);
+    return { ...generateChart(info), brightnessSchool: sc };
   } catch {
     return null;
+  } finally {
+    setBrightnessSchool('default');
   }
 }
 
@@ -63,6 +74,8 @@ export function chartToContext(chart: ZiweiChart, opts?: { label?: string; now?:
   lines.push(`生年四化（${STEMS[l.yearStem]}干）：${sihuaLine(l.yearStem)}`);
   lines.push(`当前公历年份：${thisYear}（虚岁约 ${chart.currentAge}）`);
   lines.push('');
+  const sch = BRIGHTNESS_SCHOOLS.find(s => s.id === chart.brightnessSchool) ?? BRIGHTNESS_SCHOOLS[0];
+  lines.push(`亮度表：${sch.zh}（${sch.levels}级${sch.levels === 7 ? '：庙>旺>得>利>平>不>陷' : '：庙>旺>平>闲>陷'}）；论断时请按此表说明各星亮度`);
   lines.push('【十二宫】（宫名｜宫干支｜大限岁数｜星曜：亮度/四化）');
 
   // Bắt đầu từ cung Mệnh, đi theo thứ tự 12 cung

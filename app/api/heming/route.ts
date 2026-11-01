@@ -15,7 +15,7 @@ export const maxDuration = 300;
 async function* once(text: string) { yield text; }
 
 export async function POST(req: Request) {
-  let body: { chartA?: { birthInfo?: unknown }; chartB?: { birthInfo?: unknown }; question?: unknown };
+  let body: { chartA?: { birthInfo?: unknown; brightnessSchool?: unknown }; chartB?: { birthInfo?: unknown; brightnessSchool?: unknown }; question?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -24,8 +24,8 @@ export async function POST(req: Request) {
 
   if (!aiConfigured()) return sseResponse(once(MSG_NOT_CONFIGURED), msgFromError);
 
-  const a = rebuildChart(body.chartA?.birthInfo);
-  const b = rebuildChart(body.chartB?.birthInfo);
+  const a = rebuildChart(body.chartA?.birthInfo, body.chartA?.brightnessSchool);
+  const b = rebuildChart(body.chartB?.birthInfo, body.chartB?.brightnessSchool);
   if (!a || !b) return sseResponse(once(MSG_BAD_CHART), msgFromError);
 
   const wait = takeToken(clientIp(req));

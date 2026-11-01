@@ -118,4 +118,6 @@ export interface ZiweiChart {
   shenZhu?: string;
   /** 阴阳性别（阳男/阴男/阳女/阴女） */
   yinYangGender?: string;
+  /** Bảng độ sáng đã dùng khi lập lá số (QS/XD1/ZZ/XD2) — gửi kèm để AI luận cùng bảng 亮度表流派 */
+  brightnessSchool?: string;
 }
