@@ -1,5 +1,6 @@
 /** Thông báo song ngữ trả về trong luồng luận giải khi có sự cố. 流式返回的双语提示。 */
 import Anthropic from '@anthropic-ai/sdk';
+import { EmptyCompletionError } from './llm';
 
 export const MSG_NOT_CONFIGURED =
   'Máy chủ chưa được cấu hình khóa AI. Quản trị viên cần thêm biến môi trường ANTHROPIC_API_KEY trên Vercel rồi deploy lại.\n\n'
@@ -21,6 +22,15 @@ export function msgFromError(e: unknown): string {
   // Ghi cả nguyên nhân gốc (e.cause) để đọc được trong Vercel → Logs; không bao giờ in khóa
   const cause = e instanceof Error && e.cause instanceof Error ? ` | cause: ${e.cause.name}: ${e.cause.message}` : '';
   console.error('[ai] completion error', e instanceof Error ? `${e.name}: ${e.message}${cause}`.replace(/sk-ant-[\w-]+/g, '[key]') : e);
+  if (e instanceof EmptyCompletionError) {
+    if (e.stopReason === 'refusal') {
+      return 'Mô hình từ chối trả lời câu hỏi này. Hãy thử đặt câu hỏi khác hoặc chọn chủ đề khác.\n\n模型拒绝回答此问题，请换个问法或主题再试。';
+    }
+    if (e.stopReason === 'max_tokens') {
+      return 'Mô hình dùng hết giới hạn token trước khi viết xong. Quản trị viên có thể tăng AI_MAX_TOKENS trên Vercel; bạn hãy bấm lại chủ đề.\n\n模型在输出前已用尽 token 上限，请调高 AI_MAX_TOKENS 或重试。';
+    }
+    return 'Mô hình không trả về nội dung (' + (e.stopReason ?? 'không rõ') + '). Vui lòng bấm lại chủ đề.\n\n模型未返回内容，请重试。';
+  }
   if (e instanceof Anthropic.APIConnectionError && !(e instanceof Anthropic.APIConnectionTimeoutError)) {
     return '\n\nKhông kết nối được tới Claude. Quản trị viên hãy kiểm tra ANTHROPIC_API_KEY trên Vercel: phải là khóa API dạng sk-ant-api03-…, không có khoảng trắng hay xuống dòng, rồi Redeploy.\n\n'
       + '无法连接 Claude。请管理员检查 Vercel 上的 ANTHROPIC_API_KEY：须为 sk-ant-api03- 开头的 API 密钥，且无空格换行，然后重新部署。';

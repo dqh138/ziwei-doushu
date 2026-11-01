@@ -6,7 +6,8 @@
  *   ANTHROPIC_API_KEY   khóa API Claude (bắt đầu bằng sk-ant-…)            — bắt buộc khi dùng Claude
  *   AI_PROVIDER         'anthropic' (mặc định) | 'deepseek'
  *   AI_MODEL            mặc định 'claude-sonnet-5-5'; có thể đổi 'claude-haiku-5-5' cho rẻ
- *   AI_MAX_TOKENS       mặc định 4000
+ *   AI_MAX_TOKENS       mặc định 6000
+ *   AI_THINKING         'off' (mặc định, trả chữ ngay) | 'on' (cho mô hình tự suy nghĩ — chậm hơn, tốn token hơn)
  *   DEEPSEEK_API_KEY    khi AI_PROVIDER=deepseek; model mặc định 'deepseek-flash'
  */
 import Anthropic from '@anthropic-ai/sdk';
@@ -18,10 +19,17 @@ export interface ChatMessage {
 
 export class AiConfigError extends Error {}
 
+/** Mô hình trả về xong nhưng không có chữ nào (từ chối, chỉ có khối thinking, v.v.). */
+export class EmptyCompletionError extends Error {
+  constructor(public stopReason: string | null | undefined, public blockTypes: string[]) {
+    super(`empty completion (stop_reason=${stopReason}, blocks=${blockTypes.join(',') || 'none'})`);
+  }
+}
+
 const provider = () => (process.env.AI_PROVIDER || 'anthropic').toLowerCase();
 const maxTokens = () => {
   const n = parseInt(process.env.AI_MAX_TOKENS || '', 10);
-  return Number.isFinite(n) && n > 0 ? Math.min(n, 8000) : 4000;
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 16000) : 6000;
 };
 
 /** Đọc khóa từ biến môi trường, bỏ khoảng trắng/xuống dòng/dấu nháy lỡ dán kèm (gây lỗi header → "Connection error"). */
@@ -46,20 +54,45 @@ export async function* streamCompletion(system: string, messages: ChatMessage[],
     console.warn('[ai] ANTHROPIC_API_KEY không có dạng khóa API (sk-ant-api…); Anthropic có thể từ chối.');
   }
   const client = new Anthropic({ apiKey, maxRetries: 1 });
-  const stream = client.messages.stream(
-    {
-      model: process.env.AI_MODEL || 'claude-sonnet-5-5',
-      max_tokens: maxTokens(),
-      system,
-      messages,
-    },
-    { signal },
-  );
-  for await (const event of stream) {
-    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-      yield event.delta.text;
+  // Mô hình đời mới có thể tự "nghĩ" trước khi viết; khi đó toàn bộ max_tokens có thể bị tiêu vào phần nghĩ
+  // và không còn chữ nào cho người dùng. Mặc định tắt để chữ ra ngay.
+  const thinkingOff = (process.env.AI_THINKING || 'off').toLowerCase() !== 'on';
+  const params = {
+    model: process.env.AI_MODEL || 'claude-sonnet-5-5',
+    max_tokens: maxTokens(),
+    system,
+    messages,
+    ...(thinkingOff ? { thinking: { type: 'disabled' as const } } : {}),
+  };
+
+  let produced = 0;
+  async function* run(p: typeof params) {
+    const stream = client.messages.stream(p, { signal });
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+        produced += event.delta.text.length;
+        yield event.delta.text;
+      }
+    }
+    return stream.finalMessage();
+  }
+
+  let final;
+  try {
+    final = yield* run(params);
+  } catch (e) {
+    // Mô hình không nhận tham số thinking → thử lại một lần không kèm tham số đó
+    if (thinkingOff && !produced && e instanceof Anthropic.BadRequestError && /thinking/i.test(e.message)) {
+      console.warn('[ai] model rejected thinking=disabled, retrying without it');
+      const { thinking: _omit, ...rest } = params as typeof params & { thinking?: unknown };
+      void _omit;
+      final = yield* run(rest as typeof params);
+    } else {
+      throw e;
     }
   }
+  console.info(`[ai] done model=${final.model} stop=${final.stop_reason} in=${final.usage?.input_tokens} out=${final.usage?.output_tokens} chars=${produced} blocks=${final.content.map(b => b.type).join(',')}`);
+  if (!produced) throw new EmptyCompletionError(final.stop_reason, final.content.map(b => b.type));
 }
 
 async function* streamDeepSeek(system: string, messages: ChatMessage[], signal?: AbortSignal): AsyncGenerator<string> {
@@ -129,13 +162,22 @@ export function sseResponse(chunks: AsyncGenerator<string>, onError: (e: unknown
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (text: string) => controller.enqueue(enc.encode(`data: ${JSON.stringify({ delta: { text } })}\n\n`));
+      // Gửi ngay một dòng chú thích SSE để trình duyệt nhận header, tránh bị proxy giữ lại khi mô hình nghĩ lâu
+      controller.enqueue(enc.encode(': ok\n\n'));
       try {
         for await (const text of chunks) send(text);
       } catch (e) {
-        send(onError(e));
+        let msg: string;
+        try { msg = onError(e); } catch (inner) {
+          console.error('[ai] onError failed', inner);
+          msg = '\n\nLuận giải bị gián đoạn, vui lòng thử lại.\n\n解读中断，请重试。';
+        }
+        try { send(msg); } catch { /* client đã ngắt */ }
       } finally {
-        controller.enqueue(enc.encode('data: [DONE]\n\n'));
-        controller.close();
+        try {
+          controller.enqueue(enc.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch { /* client đã ngắt */ }
       }
     },
   });

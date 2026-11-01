@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { readSseText, EMPTY_REPLY } from '@/lib/ai/read-sse';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ZiweiChart, Palace } from '@/lib/ziwei/types';
 import type { TimeView } from './TimeNav';
@@ -44,6 +45,16 @@ const LANG_RULE = `
 小节标题写成 **【越南语标题 · 中文标题】** 的形式。
 保持倪海厦体系、中式命理的论述方式、断语口吻与术语，不要西化、不要改写成心理学或星座风格。`;
 
+/** Kết cấu chung cho mọi chủ đề: Cơ hội · Rủi ro · Gợi ý hành động (mỗi ý phải có căn cứ trên lá số). */
+const OPP_RISK = `**【机遇】**
+列 3–5 点。每点格式：机遇名称 → 依据：哪一宫、哪颗星、亮度、四化或会照 → 落到现实：可能的具体表现。
+
+**【风险】**
+列 3–5 点，格式同上；只为提醒防范，不恐吓、不下死断语。
+
+**【行动建议】**
+2–3 条具体、马上可做的建议。`;
+
 const TOPIC_PROMPTS: Record<string, string> = {
   overview: `请生成命格总览，按以下结构输出：
 
@@ -59,8 +70,7 @@ const TOPIC_PROMPTS: Record<string, string> = {
 **【当前大限】**
 当下大限运势方向与最值得关注的事项。
 
-**【优势与注意】**
-命盘天赋优势，以及需要注意的风险或功课。`,
+${OPP_RISK}`,
 
   love: `请深度分析感情婚姻运，按以下结构输出：
 
@@ -76,8 +86,7 @@ const TOPIC_PROMPTS: Record<string, string> = {
 **【当前大限感情运】**
 当下10年感情走向与关键节点。
 
-**【实际建议】**
-具体可行的感情建议。`,
+${OPP_RISK}`,
 
   career: `请深度分析事业运，按以下结构输出：
 
@@ -93,8 +102,7 @@ const TOPIC_PROMPTS: Record<string, string> = {
 **【当前大限事业运】**
 当下10年事业走向。
 
-**【实际建议】**
-适合的方向、行业与策略。`,
+${OPP_RISK}`,
 
   wealth: `请深度分析财运，按以下结构输出：
 
@@ -110,8 +118,7 @@ const TOPIC_PROMPTS: Record<string, string> = {
 **【当前大限财运】**
 当下财运走向与注意事项。
 
-**【理财建议】**
-具体的财务建议。`,
+${OPP_RISK}`,
 
   health: `请分析健康运势，按以下结构输出：
 
@@ -124,8 +131,7 @@ const TOPIC_PROMPTS: Record<string, string> = {
 **【大限健康走势】**
 当下健康趋势与关键时间段。
 
-**【预防建议】**
-具体注意事项与养生方向。`,
+${OPP_RISK}`,
 
   personality: `请深度解析性格特质，按以下结构输出：
 
@@ -138,8 +144,7 @@ const TOPIC_PROMPTS: Record<string, string> = {
 **【人际关系模式】**
 与他人互动方式、待人处世风格。
 
-**【优势与人生课题】**
-天赋优势，以及需要面对的人生功课。`,
+${OPP_RISK}`,
 };
 
 const PALACE_ROLES: Record<string, string> = {
@@ -298,31 +303,14 @@ ${selectedSiHua.starName}化${selectedSiHua.siHua}落在【${palaceName}】，�
       if (!res.ok) throw new Error('请求失败');
       if (!res.body) throw new Error('无响应流');
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantText = '';
-
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6);
-          if (data === '[DONE]') break;
-          try {
-            const delta = JSON.parse(data).delta?.text ?? '';
-            assistantText += delta;
-            setMessages(prev => {
-              const updated = [...prev];
-              updated[updated.length - 1] = { role: 'assistant', content: assistantText };
-              return updated;
-            });
-          } catch { /* skip */ }
-        }
-      }
+      const setLast = (content: string) => setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: 'assistant', content };
+        return updated;
+      });
+      const full = await readSseText(res.body, setLast);
+      if (!full.trim()) setLast(EMPTY_REPLY);
     } catch (e) {
       const missing = e instanceof Error && e.message === 'api-missing';
       setMessages(prev => [...prev, { role: 'assistant', content: missing
@@ -441,7 +429,11 @@ ${selectedSiHua.starName}化${selectedSiHua.siHua}落在【${palaceName}】，�
                   <span style={{ color: 'var(--t-gold)', opacity: 0.4 }}>✦</span>
                   <Bi vi="Luận giải mệnh lý" zh="命理解读" />
                 </div>
-                <AiContent text={msg.content} streaming={loading && isLastMsg} />
+                {msg.content
+                  ? <AiContent text={msg.content} streaming={loading && isLastMsg} />
+                  : <div className="text-[11px] animate-pulse" style={{ color: 'var(--t-faint)' }}>
+                      <Bi vi="Đang an sao luận mệnh… (thường mất 10–20 giây)" zh="正在推演命盘…（通常需 10–20 秒）" />
+                    </div>}
               </motion.div>
             );
           })}
